@@ -818,7 +818,7 @@
                   <select id="terms" name="terms"></select>
                 </div>
                 <div class="field full">
-                  <div class="muted-note" id="termMeaningNote">FLT H/H = Full liner terms on hook / hook basis.</div>
+                  <div class="muted-note" id="termMeaningNote">Free In Free Out = Loading and discharging on free in / free out basis.</div>
                 </div>
                 <div class="field">
                   <label for="pol">POL</label>
@@ -862,12 +862,12 @@
               <div class="field full" style="margin-top: 10px;">
                 <div class="switch-row" id="congestionRow">
                   <input type="checkbox" id="includeCongestion" name="includeCongestion" checked />
-                  <label for="includeCongestion" style="margin:0; font-weight:700; cursor:pointer;"><span id="congestionToggleLabel">Include congestion clause when FLT H/H is selected</span></label>
+                  <label for="includeCongestion" style="margin:0; font-weight:700; cursor:pointer;"><span id="congestionToggleLabel">Congestion clause option</span></label>
                 </div>
-                <div class="muted-note" id="termStructureNote" style="margin-top: 6px;">Selected structure: free-text loading / discharging wording with optional congestion clause.</div>
+                <div class="muted-note" id="termStructureNote" style="margin-top: 6px;">Selected structure: day-based loading / discharging laytime fields according to the selected term.</div>
               </div>
 
-              <div id="laytimeFields" class="grid hidden" style="margin-top: 14px;">
+              <div id="laytimeFields" class="grid" style="margin-top: 14px;">
                 <div class="field">
                   <label for="loadingDays">Loading days</label>
                   <input id="loadingDays" name="loadingDays" value="2" />
@@ -886,7 +886,7 @@
                 </div>
               </div>
 
-              <div id="fltFields" class="grid" style="margin-top: 14px;">
+              <div id="fltFields" class="grid hidden" style="margin-top: 14px;">
                 <div class="field">
                   <label for="fltLoadingText" id="loadingTextLabel">FLT H/H loading text</label>
                   <input id="fltLoadingText" name="fltLoadingText" value="As fast as vessel can load" />
@@ -1087,7 +1087,7 @@ Armed guard / security expenses to be for owners account"></textarea>
       cargoStackableOptions: ["Cargo fully stackable", "Cargo partly stackable", "Cargo not stackable", "Cargo not stackable except containers"],
       currencyOptions: ["USD", "EURO"],
       freightTermsOptions: ["pmt", "lumpsum", "per cbm"],
-      termsOptions: ["FLT H/H", "LT H/H", "FLT", "LT", "FIO", "FIOS", "FIOT", "FIOST", "FIO LSD", "FIOS LSD", "FIOT LSD", "FIOST LSD", "FILO", "LIFO", "LILO", "FIFO"],
+      termsOptions: ["Free In Free Out", "Free In Liner Out", "Liner In Free Out", "Liner In Liner Out"],
       laytimeTermsOptions: ["sshinc", "shinc", "fshinc", "sshex", "shex", "fshex"],
       agentOptions: ["TBA", "Reba Shipping", "Supermaritime", "New Marine", "Hull Blyth Shipping", "AGL", "OBT"],
       defaults: {
@@ -1096,7 +1096,7 @@ Armed guard / security expenses to be for owners account"></textarea>
         cargoStackable: "Cargo fully stackable",
         currency: "USD",
         freightTerms: "pmt",
-        terms: "FLT H/H",
+        terms: "Free In Free Out",
         loadingTerms: "sshinc",
         dischargingTerms: "sshinc",
         agentLoad: "TBA",
@@ -1105,85 +1105,25 @@ Armed guard / security expenses to be for owners account"></textarea>
     };
 
     const TERM_BEHAVIOR = {
-      "FLT H/H": {
-        mode: "text",
-        meaning: "FLT H/H = Full liner terms on hook / hook basis.",
-        structure: "Selected structure: free-text loading / discharging wording with optional congestion clause."
-      },
-      "LT H/H": {
-        mode: "text",
-        meaning: "LT H/H = Liner terms on hook / hook basis.",
-        structure: "Selected structure: free-text loading / discharging wording with optional congestion clause."
-      },
-      "FLT": {
-        mode: "text",
-        meaning: "FLT = Full liner terms.",
-        structure: "Selected structure: free-text loading / discharging wording with optional congestion clause."
-      },
-      "LT": {
-        mode: "text",
-        meaning: "LT = Liner terms.",
-        structure: "Selected structure: free-text loading / discharging wording with optional congestion clause."
-      },
-      "FIO": {
+      "Free In Free Out": {
         mode: "laytime",
-        meaning: "FIO = Free in / out.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
+        meaning: "Free In Free Out = Loading and discharging on free in / free out basis.",
+        structure: "Selected structure: day-based loading / discharging laytime fields for both ends."
       },
-      "FIOS": {
+      "Free In Liner Out": {
         mode: "laytime",
-        meaning: "FIOS = Free in / out, stowed.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
+        meaning: "Free In Liner Out = Loading on free in basis and discharging on liner out basis.",
+        structure: "Selected structure: day-based loading / discharging laytime fields matched to the selected term."
       },
-      "FIOT": {
+      "Liner In Free Out": {
         mode: "laytime",
-        meaning: "FIOT = Free in / out, trimmed.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
+        meaning: "Liner In Free Out = Loading on liner in basis and discharging on free out basis.",
+        structure: "Selected structure: day-based loading / discharging laytime fields matched to the selected term."
       },
-      "FIOST": {
+      "Liner In Liner Out": {
         mode: "laytime",
-        meaning: "FIOST = Free in / out, stowed and trimmed.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
-      },
-      "FIO LSD": {
-        mode: "laytime",
-        meaning: "FIO LSD = Free in / out, lashed, secured and dunnaged.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
-      },
-      "FIOS LSD": {
-        mode: "laytime",
-        meaning: "FIOS LSD = Free in / out, stowed, lashed, secured and dunnaged.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
-      },
-      "FIOT LSD": {
-        mode: "laytime",
-        meaning: "FIOT LSD = Free in / out, trimmed, lashed, secured and dunnaged.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
-      },
-      "FIOST LSD": {
-        mode: "laytime",
-        meaning: "FIOST LSD = Free in / out, stowed, trimmed, lashed, secured and dunnaged.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
-      },
-      "FILO": {
-        mode: "laytime",
-        meaning: "FILO = Free in / liner out.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
-      },
-      "LIFO": {
-        mode: "laytime",
-        meaning: "LIFO = Liner in / free out.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
-      },
-      "LILO": {
-        mode: "laytime",
-        meaning: "LILO = Liner in / liner out.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
-      },
-      "FIFO": {
-        mode: "laytime",
-        meaning: "FIFO = Free in / free out.",
-        structure: "Selected structure: day-based loading / discharging laytime fields."
+        meaning: "Liner In Liner Out = Loading and discharging on liner in / liner out basis.",
+        structure: "Selected structure: day-based loading / discharging laytime fields for both ends."
       }
     };
 
@@ -1310,12 +1250,23 @@ Armed guard / security expenses to be for owners account"></textarea>
         congestionToggleLabel.textContent = `Include congestion clause when ${selectedTerm} is selected`;
       }
 
+      const loadingDaysLabel = document.querySelector('label[for="loadingDays"]');
+      const dischargingDaysLabel = document.querySelector('label[for="dischargingDays"]');
+
       if (loadingTextLabel) {
         loadingTextLabel.textContent = `${selectedTerm} loading text`;
       }
 
       if (dischargingTextLabel) {
         dischargingTextLabel.textContent = `${selectedTerm} discharging text`;
+      }
+
+      if (loadingDaysLabel) {
+        loadingDaysLabel.textContent = `${selectedTerm} loading days`;
+      }
+
+      if (dischargingDaysLabel) {
+        dischargingDaysLabel.textContent = `${selectedTerm} discharging days`;
       }
 
       if (termMeaningNote) {
