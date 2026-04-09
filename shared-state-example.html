@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Shipping | Brevo JSON Feed Maker</title>
+  <style>
+    :root {
+      --bg-1: #edf2f7;
+      --bg-2: #e4edf6;
+      --panel: rgba(255,255,255,0.94);
+      --border: #d7e0eb;
+      --border-strong: #c3cfde;
+      --text: #17314e;
+      --muted: #667b93;
+      --navy: #16355d;
+      --navy-2: #244873;
+      --gold: #caa25d;
+      --success: #166a52;
+      --shadow: 0 18px 42px rgba(16, 40, 70, 0.14);
+      --shadow-soft: 0 10px 24px rgba(16, 40, 70, 0.10);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 18px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(22,53,93,0.10), transparent 22%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    }
+
+    .page {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+    }
+
+    .top-links {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .top-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff, #f6f9fc);
+      color: var(--navy);
+      text-decoration: none;
+      font-weight: 800;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .hero,
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.86);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 22px 24px;
+      background: linear-gradient(180deg, rgba(22,53,93,0.08), rgba(255,255,255,0.30));
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      width: min(280px, 100%);
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff, #f6f9fc);
+      border: 1px solid var(--border);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.88);
+    }
+
+    .brand img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    h1 {
+      margin: 18px 0 8px;
+      font-size: clamp(1.9rem, 3vw, 2.8rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 940px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(640px, 58%) minmax(360px, 42%);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(22,53,93,0.06), rgba(255,255,255,0.22));
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .panel-header span {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    .form-sections {
+      display: grid;
+      gap: 14px;
+    }
+
+    .section {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      background: linear-gradient(180deg, #ffffff, #f7f9fc);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 0.98rem;
+    }
+
+    .section-tag {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(22,53,93,0.05);
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .grid,
+    .grid-3 {
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .full { grid-column: 1 / -1; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--muted);
+    }
+
+    input, textarea, button {
+      font: inherit;
+    }
+
+    input, textarea {
+      width: 100%;
+      min-width: 0;
+      padding: 11px 12px;
+      border-radius: 13px;
+      border: 1px solid var(--border-strong);
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    textarea {
+      min-height: 84px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--navy-2);
+      box-shadow: 0 0 0 4px rgba(36,72,115,0.10);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: #97a6b8;
+    }
+
+    .muted-note {
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+
+    .repeat-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .repeat-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      background: #fff;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .repeat-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .repeat-card-title {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .actions,
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.16s ease, opacity 0.18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      color: #fff;
+      background: linear-gradient(180deg, var(--navy-2), var(--navy));
+      box-shadow: 0 10px 22px rgba(20, 52, 91, 0.18);
+    }
+
+    .secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+    }
+
+    .accent {
+      background: linear-gradient(180deg, #d8b46f, var(--gold));
+      color: #162b43;
+      box-shadow: 0 10px 18px rgba(191, 146, 69, 0.20);
+    }
+
+    .danger {
+      background: linear-gradient(180deg, #fff1f1, #ffe4e4);
+      color: #9a2f2f;
+      border: 1px solid #f2c9c9;
+    }
+
+    .preview-column {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+    }
+
+    .status {
+      min-height: 1rem;
+      color: var(--success);
+      font-size: 0.8rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .preview-box {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .preview-top {
+      padding: 12px 14px;
+      background: linear-gradient(180deg, var(--navy-2), var(--navy));
+      color: #fff;
+    }
+
+    .preview-top small {
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.78;
+      font-size: 0.72rem;
+      margin-bottom: 6px;
+      font-weight: 800;
+    }
+
+    .preview-top strong {
+      display: block;
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+
+    pre {
+      margin: 0;
+      padding: 14px;
+      max-height: calc(100vh - 260px);
+      overflow: auto;
+      background: #fbfdff;
+      color: #17314f;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+      font-size: 0.86rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    template { display: none; }
+
+    @media (max-width: 1220px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-column {
+        position: static;
+      }
+
+      pre {
+        max-height: 540px;
+      }
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 12px; }
+      .grid, .grid-3 { grid-template-columns: 1fr; }
+      .hero-top { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="top-links">
+      <a class="top-link" href="./index.html">← Back to Tools</a>
+    </div>
+
+    <section class="hero">
+      <div class="hero-top">
+        <div class="brand">
+          <img src="https://raw.githubusercontent.com/atahan1477/CORE-SHIPPING_firm_offer_generator/main/assets/core-shipping-logo.png" alt="Core Shipping" onerror="this.style.display='none'" />
+        </div>
+        <div class="top-actions">
+          <button type="button" class="secondary" id="loadSampleBtn">Load Sample</button>
+          <button type="button" class="secondary" id="clearAllBtn">Clear All</button>
+        </div>
+      </div>
+      <h1>Brevo JSON Feed Maker</h1>
+      <p>Use this page to build the exact flat-root JSON structure required by your Brevo data feed. It generates copy-ready and download-ready JSON for campaign fields, positions, and vessel specs.</p>
+    </section>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Feed Input Workspace</h2>
+          <span>Matches the current Brevo feed field names</span>
+        </div>
+        <div class="content">
+          <div class="form-sections">
+            <div class="section">
+              <div class="section-title">
+                <h3>1. Campaign Fields</h3>
+                <div class="section-tag">Root-level scalar fields</div>
+              </div>
+              <div class="grid">
+                <div class="field">
+                  <label for="brand_label">Brand label</label>
+                  <input id="brand_label" placeholder="CORE SHIPPING" />
+                </div>
+                <div class="field">
+                  <label for="campaign_title">Campaign title</label>
+                  <input id="campaign_title" placeholder="Open Coaster Positions" />
+                </div>
+                <div class="field">
+                  <label for="issue_date">Issue date</label>
+                  <input id="issue_date" placeholder="02/04/2026" />
+                </div>
+                <div class="field full">
+                  <label for="preheader_text">Preheader text</label>
+                  <input id="preheader_text" placeholder="Current open coaster positions from Core Shipping." />
+                </div>
+                <div class="field full">
+                  <label for="intro_text">Intro text</label>
+                  <textarea id="intro_text" placeholder="Please find below our current open coaster positions..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">
+                <h3>2. Contact, CTA & Footer</h3>
+                <div class="section-tag">Still flat at root</div>
+              </div>
+              <div class="grid">
+                <div class="field">
+                  <label for="contact_email">Contact email</label>
+                  <input id="contact_email" placeholder="chartering@core-shipping.com" />
+                </div>
+                <div class="field">
+                  <label for="contact_phone">Contact phone</label>
+                  <input id="contact_phone" placeholder="+90 (216) 392 20 10" />
+                </div>
+                <div class="field">
+                  <label for="website_url">Website URL</label>
+                  <input id="website_url" placeholder="https://www.core-shipping.com" />
+                </div>
+                <div class="field">
+                  <label for="website_label">Website label</label>
+                  <input id="website_label" placeholder="www.core-shipping.com" />
+                </div>
+                <div class="field">
+                  <label for="linkedin_url">LinkedIn URL</label>
+                  <input id="linkedin_url" placeholder="https://www.linkedin.com/company/core-shipping/" />
+                </div>
+                <div class="field">
+                  <label for="youtube_url">YouTube URL</label>
+                  <input id="youtube_url" placeholder="https://www.youtube.com/" />
+                </div>
+                <div class="field">
+                  <label for="cta_title">CTA title</label>
+                  <input id="cta_title" placeholder="Firm and Prompt Enquiries Welcome" />
+                </div>
+                <div class="field">
+                  <label for="cta_button_label">CTA button label</label>
+                  <input id="cta_button_label" placeholder="Contact Chartering" />
+                </div>
+                <div class="field full">
+                  <label for="cta_text">CTA text</label>
+                  <textarea id="cta_text" placeholder="Please contact our chartering desk..."></textarea>
+                </div>
+                <div class="field full">
+                  <label for="cta_url">CTA URL</label>
+                  <input id="cta_url" placeholder="mailto:chartering@core-shipping.com" />
+                </div>
+                <div class="field">
+                  <label for="company_name">Company name</label>
+                  <input id="company_name" placeholder="Core Shipping" />
+                </div>
+                <div class="field">
+                  <label for="company_address_line_1">Company address line 1</label>
+                  <input id="company_address_line_1" placeholder="Bagdat Cad, Turab Sok, No: 06/06" />
+                </div>
+                <div class="field full">
+                  <label for="company_address_line_2">Company address line 2</label>
+                  <input id="company_address_line_2" placeholder="34744, Istanbul, Turkey" />
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">
+                <h3>3. Open Positions</h3>
+                <div class="actions">
+                  <div class="section-tag">positions[]</div>
+                  <button type="button" class="primary" id="addPositionBtn">+ Add Position</button>
+                </div>
+              </div>
+              <div id="positionsList" class="repeat-list"></div>
+              <div class="muted-note">Each position item uses: vessel_name, dwcc, cbft, open_port, open_date, spec_url.</div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">
+                <h3>4. Vessel Specs</h3>
+                <div class="actions">
+                  <div class="section-tag">specs[]</div>
+                  <button type="button" class="primary" id="addSpecBtn">+ Add Spec</button>
+                </div>
+              </div>
+              <div id="specsList" class="repeat-list"></div>
+              <div class="muted-note">Each spec item uses: vessel_name, dwcc, cbft, hold_details, tt_strength, note_1, note_2, note_3, spec_url.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel preview-column">
+        <div class="panel-header">
+          <h2>Generated Feed JSON</h2>
+          <span>Ready for Brevo / GitHub / jsDelivr</span>
+        </div>
+        <div class="content">
+          <div class="actions" style="margin-bottom:10px;">
+            <button type="button" class="primary" id="copyJsonBtn">Copy JSON</button>
+            <button type="button" class="accent" id="downloadJsonBtn">Download JSON</button>
+          </div>
+          <div class="status" id="status">Sample loaded.</div>
+          <div class="preview-box">
+            <div class="preview-top">
+              <small>Filename</small>
+              <strong>core_shipping_open_positions_sample.json</strong>
+            </div>
+            <pre id="jsonPreview"></pre>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <template id="positionTemplate">
+    <div class="repeat-card position-item">
+      <div class="repeat-card-header">
+        <div class="repeat-card-title">Position <span class="item-number"></span></div>
+        <button type="button" class="danger remove-item-btn">Remove</button>
+      </div>
+      <div class="grid-3">
+        <div class="field"><label>Vessel name</label><input data-field="vessel_name" placeholder="MV HELEN ANNA" /></div>
+        <div class="field"><label>DWCC</label><input data-field="dwcc" placeholder="3480" /></div>
+        <div class="field"><label>CBFT</label><input data-field="cbft" placeholder="162,000" /></div>
+        <div class="field"><label>Open port</label><input data-field="open_port" placeholder="MARMARA" /></div>
+        <div class="field"><label>Open date</label><input data-field="open_date" placeholder="03/04" /></div>
+        <div class="field"><label>Spec URL</label><input data-field="spec_url" placeholder="https://example.com/helen-anna-spec" /></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="specTemplate">
+    <div class="repeat-card spec-item">
+      <div class="repeat-card-header">
+        <div class="repeat-card-title">Spec <span class="item-number"></span></div>
+        <button type="button" class="danger remove-item-btn">Remove</button>
+      </div>
+      <div class="grid-3">
+        <div class="field"><label>Vessel name</label><input data-field="vessel_name" placeholder="MV HELEN ANNA" /></div>
+        <div class="field"><label>DWCC</label><input data-field="dwcc" placeholder="3550" /></div>
+        <div class="field"><label>CBFT</label><input data-field="cbft" placeholder="162,000" /></div>
+        <div class="field full"><label>Hold details</label><input data-field="hold_details" placeholder="1 Hold - 56.55 x 10.02 x 8.10m" /></div>
+        <div class="field full"><label>TT strength</label><input data-field="tt_strength" placeholder="TT Strength 15.00 mt/m²" /></div>
+        <div class="field"><label>Note 1</label><input data-field="note_1" placeholder="SID / Fully Box" /></div>
+        <div class="field"><label>Note 2</label><input data-field="note_2" placeholder="Equipped with lashing materials" /></div>
+        <div class="field"><label>Note 3</label><input data-field="note_3" placeholder="2 moveable bulkheads" /></div>
+        <div class="field full"><label>Spec URL</label><input data-field="spec_url" placeholder="https://example.com/helen-anna-spec" /></div>
+      </div>
+    </div>
+  </template>
+
+  <script type="module" src="./js/shared-state-example.js"></script>
+</body>
+</html>
