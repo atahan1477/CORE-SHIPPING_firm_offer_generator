@@ -188,7 +188,18 @@ function renderStructuredSpecsGrid() {
     labelInput.value = specRow.label || '';
     labelInput.placeholder = 'Spec label (e.g. DWCC)';
     labelInput.addEventListener('input', () => {
-      specRow.label = labelInput.value;
+      const nextLabel = labelInput.value;
+      const rowId = String(specRow.id || '').trim();
+      specRow.label = nextLabel;
+      if (rowId) {
+        (working.vesselOptions || []).forEach((vessel) => {
+          const list = Array.isArray(working.vesselStructuredSpecs[vessel])
+            ? working.vesselStructuredSpecs[vessel]
+            : [];
+          const matched = list.find((item) => String(item?.id || '').trim() === rowId);
+          if (matched) matched.label = nextLabel;
+        });
+      }
       refreshPreview();
     });
 
@@ -207,7 +218,18 @@ function renderStructuredSpecsGrid() {
     htmlLineInput.value = String(specRow.htmlLine || (Math.floor(index / 2) + 1));
     htmlLineInput.title = 'HTML line group';
     htmlLineInput.addEventListener('change', () => {
-      specRow.htmlLine = Math.max(1, Number.parseInt(htmlLineInput.value, 10) || 1);
+      const nextLine = Math.max(1, Number.parseInt(htmlLineInput.value, 10) || 1);
+      const rowId = String(specRow.id || '').trim();
+      specRow.htmlLine = nextLine;
+      if (rowId) {
+        (working.vesselOptions || []).forEach((vessel) => {
+          const list = Array.isArray(working.vesselStructuredSpecs[vessel])
+            ? working.vesselStructuredSpecs[vessel]
+            : [];
+          const matched = list.find((item) => String(item?.id || '').trim() === rowId);
+          if (matched) matched.htmlLine = nextLine;
+        });
+      }
       refreshPreview();
     });
 
