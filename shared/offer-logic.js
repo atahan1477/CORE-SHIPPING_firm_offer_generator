@@ -186,6 +186,7 @@ export function parseSelectedVesselSpecValues(specsText) {
 function normalizeRow(row, index) {
   return {
     id: trimmed(row?.id || `spec_${index + 1}`),
+    enabled: row?.enabled !== false,
     order: Number(row?.order) > 0 ? Number(row.order) : index + 1,
     label: trimmed(row?.label || ''),
     value: trimmed(row?.value || ''),
@@ -211,13 +212,13 @@ export function buildVesselSpecsBlocks(vessel, runtimeConfig) {
   const base = trimmed(vessel);
   if (!base) return { raw: '', html: '' };
 
-  const specRows = getVesselSpecRows(base, runtimeConfig);
-  if (!specRows.length) return { raw: '', html: '' };
+  const enabledRows = getVesselSpecRows(base, runtimeConfig).filter((row) => row.enabled);
+  if (!enabledRows.length) return { raw: '', html: '' };
 
   const separator = base.length > 16 ? '----------------------' : '---------------';
-  const rawLines = specRows.map((row, index) => `${index + 1}. ${row.label || '-'}: ${row.value || '-'}`);
+  const rawLines = enabledRows.map((row, index) => `${index + 1}. ${row.label || '-'}: ${row.value || '-'}`);
   const htmlGroups = new Map();
-  specRows.forEach((row) => {
+  enabledRows.forEach((row) => {
     const lineNo = row.htmlLine || 1;
     if (!htmlGroups.has(lineNo)) htmlGroups.set(lineNo, []);
     htmlGroups.get(lineNo).push(`${row.label || '-'}: ${row.value || '-'}`);

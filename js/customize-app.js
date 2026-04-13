@@ -59,35 +59,11 @@ function createWorkingCopy(source) {
 function createSpecRow(index = 0) {
   return {
     id: `spec_${Date.now()}_${index}`,
+    enabled: true,
     order: index + 1,
     label: '',
     value: '-',
     htmlLine: Math.floor(index / 2) + 1
-  };
-}
-
-function getTemplateVessel() {
-  return working.vesselOptions[0] || selectedVessel || '';
-}
-
-function normalizeRows(rows = []) {
-  return rows
-    .slice()
-    .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0))
-    .map((row, index) => ({
-      ...row,
-      id: row.id || `spec_${Date.now()}_${index}`,
-      order: index + 1,
-      htmlLine: Number(row?.htmlLine) || Math.floor(index / 2) + 1
-    }));
-}
-
-function cloneRowMeta(row, index) {
-  return {
-    id: row.id || `spec_${Date.now()}_${index}`,
-    order: Number(row.order) || (index + 1),
-    label: String(row.label || ''),
-    htmlLine: Number(row.htmlLine) || Math.floor(index / 2) + 1
   };
 }
 
@@ -98,6 +74,7 @@ function ensureVesselRecord(vessel) {
     if (legacy && typeof legacy === 'object') {
       working.vesselStructuredSpecs[vessel] = Object.entries(legacy).map(([key, value], index) => ({
         id: key,
+        enabled: true,
         order: index + 1,
         label: key,
         value: String(value ?? '').trim(),
@@ -107,36 +84,6 @@ function ensureVesselRecord(vessel) {
       working.vesselStructuredSpecs[vessel] = [];
     }
   }
-  working.vesselStructuredSpecs[vessel] = normalizeRows(working.vesselStructuredSpecs[vessel]);
-}
-
-function alignAllVesselRowsToTemplate() {
-  const templateVessel = getTemplateVessel();
-  if (!templateVessel) return;
-  ensureVesselRecord(templateVessel);
-
-  const templateRows = normalizeRows(working.vesselStructuredSpecs[templateVessel]);
-  working.vesselStructuredSpecs[templateVessel] = templateRows;
-
-  working.vesselOptions.forEach((vessel) => {
-    ensureVesselRecord(vessel);
-    const existingById = new Map((working.vesselStructuredSpecs[vessel] || []).map((row) => [row.id, row]));
-    working.vesselStructuredSpecs[vessel] = templateRows.map((templateRow, index) => {
-      const existing = existingById.get(templateRow.id);
-      return {
-        ...cloneRowMeta(templateRow, index),
-        value: String(existing?.value ?? '-').trim() || '-'
-      };
-    });
-  });
-}
-
-function updateRowMetaForAllVessels(rowId, updater) {
-  working.vesselOptions.forEach((vessel) => {
-    ensureVesselRecord(vessel);
-    const row = working.vesselStructuredSpecs[vessel].find((item) => item.id === rowId);
-    if (row) updater(row);
-  });
 }
 
 function ensureTermBehaviorRecords() {
@@ -174,13 +121,29 @@ function renderStructuredSpecsGrid() {
   ensureVesselRecord(selectedVessel);
   structuredSpecsGrid.innerHTML = '';
 
-  const rows = normalizeRows(working.vesselStructuredSpecs[selectedVessel]);
+  const rows = working.vesselStructuredSpecs[selectedVessel]
+    .slice()
+    .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0))
+    .map((row, index) => ({
+      ...row,
+      order: index + 1,
+      enabled: row?.enabled !== false
+    }));
 
   working.vesselStructuredSpecs[selectedVessel] = rows;
 
   rows.forEach((specRow, index) => {
     const row = document.createElement('div');
     row.className = 'structured-row';
+
+    const enabledInput = document.createElement('input');
+    enabledInput.type = 'checkbox';
+    enabledInput.checked = specRow.enabled !== false;
+    enabledInput.title = 'Enabled in output';
+    enabledInput.addEventListener('change', () => {
+      specRow.enabled = enabledInput.checked;
+      refreshPreview();
+    });
 
     const orderInput = document.createElement('input');
     orderInput.type = 'number';
@@ -189,10 +152,7 @@ function renderStructuredSpecsGrid() {
     orderInput.value = String(specRow.order || (index + 1));
     orderInput.title = 'Order';
     orderInput.addEventListener('change', () => {
-      const nextOrder = Math.max(1, Number.parseInt(orderInput.value, 10) || (index + 1));
-      updateRowMetaForAllVessels(specRow.id, (rowItem) => {
-        rowItem.order = nextOrder;
-      });
+      specRow.order = Math.max(1, Number.parseInt(orderInput.value, 10) || (index + 1));
       renderStructuredSpecsGrid();
       refreshPreview();
     });
@@ -201,9 +161,7 @@ function renderStructuredSpecsGrid() {
     labelInput.value = specRow.label || '';
     labelInput.placeholder = 'Spec label (e.g. DWCC)';
     labelInput.addEventListener('input', () => {
-      updateRowMetaForAllVessels(specRow.id, (rowItem) => {
-        rowItem.label = labelInput.value;
-      });
+      specRow.label = labelInput.value;
       refreshPreview();
     });
 
@@ -222,10 +180,7 @@ function renderStructuredSpecsGrid() {
     htmlLineInput.value = String(specRow.htmlLine || (Math.floor(index / 2) + 1));
     htmlLineInput.title = 'HTML line group';
     htmlLineInput.addEventListener('change', () => {
-      const nextHtmlLine = Math.max(1, Number.parseInt(htmlLineInput.value, 10) || 1);
-      updateRowMetaForAllVessels(specRow.id, (rowItem) => {
-        rowItem.htmlLine = nextHtmlLine;
-      });
+      specRow.htmlLine = Math.max(1, Number.parseInt(htmlLineInput.value, 10) || 1);
       refreshPreview();
     });
 
@@ -239,12 +194,8 @@ function renderStructuredSpecsGrid() {
     upBtn.disabled = index === 0;
     upBtn.addEventListener('click', () => {
       if (index === 0) return;
-      const currentList = working.vesselStructuredSpecs[selectedVessel];
-      const prevRowId = currentList[index - 1]?.id;
-      const currentRowId = currentList[index]?.id;
-      if (!prevRowId || !currentRowId) return;
-      updateRowMetaForAllVessels(prevRowId, (rowItem) => { rowItem.order = index + 1; });
-      updateRowMetaForAllVessels(currentRowId, (rowItem) => { rowItem.order = index; });
+      const list = working.vesselStructuredSpecs[selectedVessel];
+      [list[index - 1], list[index]] = [list[index], list[index - 1]];
       renderStructuredSpecsGrid();
       refreshPreview();
     });
@@ -256,12 +207,8 @@ function renderStructuredSpecsGrid() {
     downBtn.disabled = index === rows.length - 1;
     downBtn.addEventListener('click', () => {
       if (index >= rows.length - 1) return;
-      const currentList = working.vesselStructuredSpecs[selectedVessel];
-      const nextRowId = currentList[index + 1]?.id;
-      const currentRowId = currentList[index]?.id;
-      if (!nextRowId || !currentRowId) return;
-      updateRowMetaForAllVessels(nextRowId, (rowItem) => { rowItem.order = index + 1; });
-      updateRowMetaForAllVessels(currentRowId, (rowItem) => { rowItem.order = index + 2; });
+      const list = working.vesselStructuredSpecs[selectedVessel];
+      [list[index + 1], list[index]] = [list[index], list[index + 1]];
       renderStructuredSpecsGrid();
       refreshPreview();
     });
@@ -271,10 +218,7 @@ function renderStructuredSpecsGrid() {
     removeBtn.className = 'danger icon-btn';
     removeBtn.textContent = 'Remove';
     removeBtn.addEventListener('click', () => {
-      working.vesselOptions.forEach((vessel) => {
-        ensureVesselRecord(vessel);
-        working.vesselStructuredSpecs[vessel] = working.vesselStructuredSpecs[vessel].filter((rowItem) => rowItem.id !== specRow.id);
-      });
+      working.vesselStructuredSpecs[selectedVessel].splice(index, 1);
       renderStructuredSpecsGrid();
       refreshPreview();
     });
@@ -283,6 +227,7 @@ function renderStructuredSpecsGrid() {
     actions.appendChild(downBtn);
     actions.appendChild(removeBtn);
 
+    row.appendChild(enabledInput);
     row.appendChild(orderInput);
     row.appendChild(labelInput);
     row.appendChild(valueInput);
@@ -584,21 +529,12 @@ document.getElementById('removeVesselBtn').addEventListener('click', () => {
 });
 
 addSpecRowBtn.addEventListener('click', () => {
-  const templateVessel = getTemplateVessel();
-  ensureVesselRecord(templateVessel);
-  const nextIndex = working.vesselStructuredSpecs[templateVessel].length;
-  const newRow = createSpecRow(nextIndex);
-
-  working.vesselOptions.forEach((vessel) => {
-    ensureVesselRecord(vessel);
-    working.vesselStructuredSpecs[vessel].push({
-      ...cloneRowMeta(newRow, nextIndex),
-      value: '-'
-    });
-  });
+  ensureVesselRecord(selectedVessel);
+  const nextIndex = working.vesselStructuredSpecs[selectedVessel].length;
+  working.vesselStructuredSpecs[selectedVessel].push(createSpecRow(nextIndex));
   renderStructuredSpecsGrid();
   refreshPreview();
-  showStatus('New structured spec row added for all vessels (value remains vessel-specific).');
+  showStatus('New structured spec row added.');
 });
 
 vesselSelect.addEventListener('change', () => {

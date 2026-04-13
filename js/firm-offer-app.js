@@ -125,7 +125,7 @@ function syncStructuredVesselSpecs() {
   includeVesselSpecsInput.checked = Boolean(trimmed(generatedBlocks.raw));
 
   if (vesselSpecsPreview) {
-    vesselSpecsPreview.textContent = generatedBlocks.raw || 'No structured spec rows for the selected vessel.';
+    vesselSpecsPreview.textContent = generatedBlocks.raw || 'No enabled structured spec rows for the selected vessel.';
   }
 }
 
