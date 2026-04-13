@@ -98,6 +98,57 @@ function ensureTermBehaviorRecords() {
   });
 }
 
+function alignAllVesselRowsToTemplate() {
+  const vessels = Array.isArray(working.vesselOptions) ? working.vesselOptions.filter(Boolean) : [];
+  if (!vessels.length) return;
+
+  vessels.forEach((vessel) => ensureVesselRecord(vessel));
+
+  const templateVessel = vessels.find((vessel) => (working.vesselStructuredSpecs[vessel] || []).length > 0) || vessels[0];
+  const templateRows = (working.vesselStructuredSpecs[templateVessel] || [])
+    .slice()
+    .sort((a, b) => (Number(a?.order) || 0) - (Number(b?.order) || 0))
+    .map((row, index) => ({
+      id: String(row?.id || `spec_${index + 1}`),
+      order: index + 1,
+      label: String(row?.label || '').trim(),
+      htmlLine: Math.max(1, Number.parseInt(row?.htmlLine, 10) || (Math.floor(index / 2) + 1))
+    }));
+
+  vessels.forEach((vessel) => {
+    const existingRows = (working.vesselStructuredSpecs[vessel] || []).slice();
+    const byId = new Map(existingRows.map((row) => [String(row?.id || ''), row]));
+
+    const alignedRows = templateRows.map((templateRow) => {
+      const current = byId.get(templateRow.id);
+      return {
+        id: templateRow.id,
+        enabled: current?.enabled !== false,
+        order: templateRow.order,
+        label: templateRow.label,
+        value: String(current?.value ?? '-').trim() || '-',
+        htmlLine: templateRow.htmlLine
+      };
+    });
+
+    // Keep vessel-specific extra rows if they exist and template was not updated yet.
+    existingRows.forEach((row) => {
+      const id = String(row?.id || '').trim();
+      if (!id || templateRows.some((templateRow) => templateRow.id === id)) return;
+      alignedRows.push({
+        id,
+        enabled: row?.enabled !== false,
+        order: alignedRows.length + 1,
+        label: String(row?.label || '').trim(),
+        value: String(row?.value ?? '-').trim() || '-',
+        htmlLine: Math.max(1, Number.parseInt(row?.htmlLine, 10) || Math.floor((alignedRows.length + 1) / 2))
+      });
+    });
+
+    working.vesselStructuredSpecs[vessel] = alignedRows;
+  });
+}
+
 function renderVesselSelector() {
   vesselSelect.innerHTML = '';
   working.vesselOptions.forEach((vessel) => {
