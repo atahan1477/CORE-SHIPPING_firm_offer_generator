@@ -55,8 +55,8 @@ export const baseConfig = {
     cargoStackable: 'Cargo fully stackable',
     pcBasis: 'P/c basis',
     includeVesselSpecs: true,
-    selectedVesselSpecFields: 'built_imo,type,flag,class,dwt,hold_hatch,grain_bale,gear',
     vesselSpecs: '',
+    vesselSpecsHtml: '',
     laycanDate: '01-10 Sep 2024',
     terms: 'Free In Free Out',
     pol: '',
@@ -177,6 +177,67 @@ function sanitizeFieldOptions(values) {
   return safe.length ? safe : clone(baseConfig.vesselSpecFieldOptions);
 }
 
+function toPositiveInt(value, fallback = 0) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+  return parsed;
+}
+
+function sanitizeSpecRowsArray(rows, fallbackRows = []) {
+  const safeRows = [];
+  const used = new Set();
+
+  (Array.isArray(rows) ? rows : []).forEach((row, index) => {
+    const label = trimmed(row?.label || '');
+    const value = trimmed(row?.value || '');
+    if (!label && !value) return;
+
+    let id = trimmed(row?.id || '');
+    if (!id) id = `spec_${index + 1}`;
+    while (used.has(id)) {
+      id = `${id}_x`;
+    }
+    used.add(id);
+
+    safeRows.push({
+      id,
+      enabled: row?.enabled !== false,
+      order: toPositiveInt(row?.order, index + 1),
+      label,
+      value,
+      htmlLine: toPositiveInt(row?.htmlLine, Math.floor(index / 2) + 1)
+    });
+  });
+
+  if (!safeRows.length && fallbackRows.length) {
+    return sanitizeSpecRowsArray(fallbackRows, []);
+  }
+
+  return safeRows
+    .sort((a, b) => a.order - b.order)
+    .map((row, index) => ({ ...row, order: index + 1 }));
+}
+
+function buildLegacyRowsFromObjects(vesselRecord, fieldOptions, defaultSelectedIds = []) {
+  const selected = new Set(defaultSelectedIds);
+  const rows = [];
+
+  fieldOptions.forEach((field, index) => {
+    const value = trimmed(vesselRecord?.[field.id] || '');
+    const enabled = selected.size ? selected.has(field.id) : Boolean(value);
+    rows.push({
+      id: field.id,
+      enabled,
+      order: index + 1,
+      label: field.label,
+      value,
+      htmlLine: Math.floor(index / 2) + 1
+    });
+  });
+
+  return rows;
+}
+
 function sanitizeVesselSpecsMap(value, vesselOptions) {
   const result = {};
   const safeValue = value && typeof value === 'object' ? value : {};
@@ -188,16 +249,19 @@ function sanitizeVesselSpecsMap(value, vesselOptions) {
   return result;
 }
 
-function sanitizeStructuredSpecs(value, vesselOptions, fieldOptions) {
+function sanitizeStructuredSpecs(value, vesselOptions, fieldOptions, defaultSelectedIds = []) {
   const safeValue = value && typeof value === 'object' ? value : {};
   const result = {};
 
   vesselOptions.forEach((vessel) => {
     const vesselRecord = safeValue[vessel] && typeof safeValue[vessel] === 'object' ? safeValue[vessel] : {};
-    result[vessel] = {};
-    fieldOptions.forEach((field) => {
-      result[vessel][field.id] = trimmed(vesselRecord[field.id] ?? '');
-    });
+    if (Array.isArray(vesselRecord)) {
+      result[vessel] = sanitizeSpecRowsArray(vesselRecord);
+      return;
+    }
+
+    const legacyRows = buildLegacyRowsFromObjects(vesselRecord, fieldOptions, defaultSelectedIds);
+    result[vessel] = sanitizeSpecRowsArray(legacyRows);
   });
 
   return result;
@@ -208,6 +272,7 @@ function sanitizeFormDefaults(value) {
   const safeValue = value && typeof value === 'object' ? value : {};
 
   Object.entries(safeValue).forEach(([key, raw]) => {
+    if (!(key in next)) return;
     if (typeof next[key] === 'boolean') {
       next[key] = Boolean(raw);
     } else {
@@ -256,13 +321,16 @@ function sanitizeCustomization(value) {
   const vesselOptions = uniqueTrimmedList(source.vesselOptions || baseConfig.vesselOptions);
   const vesselSpecFieldOptions = sanitizeFieldOptions(source.vesselSpecFieldOptions || baseConfig.vesselSpecFieldOptions);
   const vesselSpecs = sanitizeVesselSpecsMap(source.vesselSpecs || baseConfig.vesselSpecs, vesselOptions);
-  const vesselStructuredSpecs = sanitizeStructuredSpecs(source.vesselStructuredSpecs || {}, vesselOptions, vesselSpecFieldOptions);
+  const defaultSelectedIds = String(source?.formDefaults?.selectedVesselSpecFields || baseConfig.formDefaults.selectedVesselSpecFields || '')
+    .split(',')
+    .map((item) => trimmed(item))
+    .filter(Boolean);
+  const vesselStructuredSpecs = sanitizeStructuredSpecs(source.vesselStructuredSpecs || {}, vesselOptions, vesselSpecFieldOptions, defaultSelectedIds);
 
   return {
     vesselOptions,
     vesselSpecs,
     vesselStructuredSpecs,
-    vesselSpecFieldOptions,
     underDeckOptions: uniqueTrimmedList(source.underDeckOptions || baseConfig.underDeckOptions),
     cargoStackableOptions: uniqueTrimmedList(source.cargoStackableOptions || baseConfig.cargoStackableOptions),
     currencyOptions: uniqueTrimmedList(source.currencyOptions || baseConfig.currencyOptions),

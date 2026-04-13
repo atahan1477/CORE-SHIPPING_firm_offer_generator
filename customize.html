@@ -198,16 +198,17 @@
     .structured-grid { display: grid; gap: 10px; }
     .structured-row {
       display: grid;
-      grid-template-columns: 180px minmax(0, 1fr);
+      grid-template-columns: 34px 90px minmax(160px, 0.9fr) minmax(220px, 1fr) 88px auto;
       gap: 10px;
-      align-items: start;
+      align-items: center;
       padding: 10px 12px;
       border: 1px solid var(--border);
       border-radius: 14px;
       background: #fff;
     }
 
-    .structured-row strong { font-size: 0.83rem; line-height: 1.4; }
+    .mini-input { padding: 8px 9px; border-radius: 10px; }
+    .icon-btn { padding: 8px 10px; font-size: 0.8rem; }
     .option-editor { display: grid; gap: 10px; }
     .option-card {
       border: 1px solid var(--border);
@@ -259,7 +260,8 @@
     }
 
     @media (max-width: 860px) {
-      .grid, .structured-row, .repeat-row, .auth-bar { grid-template-columns: 1fr; }
+      .grid, .repeat-row, .auth-bar { grid-template-columns: 1fr; }
+      .structured-row { grid-template-columns: 1fr; }
       body { padding: 12px; }
     }
   </style>
@@ -280,7 +282,7 @@
 
     <section class="hero">
       <h1>Customize Generator</h1>
-      <p>Use this page to manage the Firm Offer Generator data without editing source code. You can add or remove vessels, change vessel spec fields and labels, update selectables, adjust term meanings, and change generator defaults. Shared saves are loaded through your Vercel API so all users see the same setup after refresh.</p>
+      <p>Use this page to manage the Firm Offer Generator data without editing source code. You can add or remove vessels, maintain structured vessel spec rows, update selectables, adjust term meanings, and change generator defaults. Shared saves are loaded through your Vercel API so all users see the same setup after refresh.</p>
       <div class="auth-bar">
         <div class="auth-card">
           <div class="field">
@@ -324,30 +326,18 @@
                 <div class="field full">
                   <label for="customizerRawSpecs">Raw source specs</label>
                   <textarea id="customizerRawSpecs" placeholder="Paste or keep your raw source spec text here."></textarea>
-                  <div class="note">This raw block is optional as a source note and fallback. The live generator uses the structured field values below for the checkbox output.</div>
+                  <div class="note">This raw block is optional as source/reference data. Generator output is driven by structured spec rows below.</div>
                 </div>
               </div>
             </div>
 
             <div class="subsection">
-              <h3>Structured vessel field values</h3>
-              <div class="note">Each field value below belongs to the currently selected vessel. These are the exact values that appear when their checkbox is selected in the generator.</div>
-              <div id="structuredSpecsGrid" class="structured-grid"></div>
-            </div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h2>Checkbox Spec Fields</h2>
-            <span>Add, rename, or remove vessel spec checkbox items</span>
-          </div>
-          <div class="content">
-            <div class="subsection">
+              <h3>Structured vessel spec rows</h3>
+              <div class="note">Each row controls enabled state, order, label, value, and optional HTML line grouping.</div>
               <div class="inline-actions">
-                <button type="button" class="secondary" id="addSpecFieldBtn">+ Add field</button>
+                <button type="button" class="secondary" id="addSpecRowBtn">+ Add spec row</button>
               </div>
-              <div id="specFieldList" class="repeat-list"></div>
+              <div id="structuredSpecsGrid" class="structured-grid"></div>
             </div>
           </div>
         </section>

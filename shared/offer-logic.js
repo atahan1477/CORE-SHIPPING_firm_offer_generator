@@ -183,37 +183,54 @@ export function parseSelectedVesselSpecValues(specsText) {
   };
 }
 
-export function getVesselStructuredValues(vessel, runtimeConfig) {
-  const base = trimmed(vessel);
-  const fromStructured = runtimeConfig?.vesselStructuredSpecs?.[base] || {};
-  const fallback = parseSelectedVesselSpecValues(runtimeConfig?.vesselSpecs?.[base] || '');
-  const result = {};
-
-  (runtimeConfig?.vesselSpecFieldOptions || []).forEach((field) => {
-    result[field.id] = trimmed(fromStructured[field.id]) || trimmed(fallback[field.id]) || '';
-  });
-
-  return result;
+function normalizeRow(row, index) {
+  return {
+    id: trimmed(row?.id || `spec_${index + 1}`),
+    enabled: row?.enabled !== false,
+    order: Number(row?.order) > 0 ? Number(row.order) : index + 1,
+    label: trimmed(row?.label || ''),
+    value: trimmed(row?.value || ''),
+    htmlLine: Number(row?.htmlLine) > 0 ? Number(row.htmlLine) : Math.floor(index / 2) + 1
+  };
 }
 
-export function buildSelectedVesselSpecsBlock(vessel, runtimeConfig, selectedFieldIds = []) {
+export function getVesselSpecRows(vessel, runtimeConfig) {
   const base = trimmed(vessel);
-  if (!base) return '';
+  if (!base) return [];
 
-  const fieldIds = parseSelectedSpecFieldIds(selectedFieldIds);
-  if (!fieldIds.length) return '';
+  const rows = Array.isArray(runtimeConfig?.vesselStructuredSpecs?.[base])
+    ? runtimeConfig.vesselStructuredSpecs[base]
+    : [];
 
-  const fieldOptions = runtimeConfig?.vesselSpecFieldOptions || [];
-  const values = getVesselStructuredValues(base, runtimeConfig);
+  return rows
+    .map(normalizeRow)
+    .filter((row) => row.label || row.value)
+    .sort((a, b) => a.order - b.order);
+}
+
+export function buildVesselSpecsBlocks(vessel, runtimeConfig) {
+  const base = trimmed(vessel);
+  if (!base) return { raw: '', html: '' };
+
+  const enabledRows = getVesselSpecRows(base, runtimeConfig).filter((row) => row.enabled);
+  if (!enabledRows.length) return { raw: '', html: '' };
+
   const separator = base.length > 16 ? '----------------------' : '---------------';
-  const lines = fieldIds.map((id) => {
-    const field = fieldOptions.find((option) => option.id === id);
-    const label = field?.label || id;
-    const value = trimmed(values[id]) || '-';
-    return `${label}: ${value}`;
+  const rawLines = enabledRows.map((row, index) => `${index + 1}. ${row.label || '-'}: ${row.value || '-'}`);
+  const htmlGroups = new Map();
+  enabledRows.forEach((row) => {
+    const lineNo = row.htmlLine || 1;
+    if (!htmlGroups.has(lineNo)) htmlGroups.set(lineNo, []);
+    htmlGroups.get(lineNo).push(`${row.label || '-'}: ${row.value || '-'}`);
   });
+  const htmlLines = Array.from(htmlGroups.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([, items]) => items.join(' '));
 
-  return `${vesselFinal(base).toUpperCase()}\n${separator}\n${lines.join('\n')}`;
+  return {
+    raw: `${vesselFinal(base).toUpperCase()}\n${separator}\n${rawLines.join('\n')}`,
+    html: `${vesselFinal(base).toUpperCase()}\n${separator}\n${htmlLines.join('\n')}`
+  };
 }
 
 export function normalizePort(value, suffix) {
@@ -348,7 +365,10 @@ export function buildOfferText(data) {
     lines.push(trimmed(data.finalClause));
   }
 
-  return lines.join('\n');
+  return lines
+    .filter((line) => trimmed(line))
+    .map((line, index) => `${index + 1}. ${line}`)
+    .join('\n');
 }
 
 export function buildEmailText(data) {
@@ -420,6 +440,7 @@ export function buildComputedOffer(data) {
     extraClauses: clauseLinesFromText(data.extraClauses),
     finalClause: trimmed(data.finalClause),
     vesselSpecs: data.includeVesselSpecs ? trimmed(data.vesselSpecs) : '',
+    vesselSpecsHtml: data.includeVesselSpecs ? trimmed(data.vesselSpecsHtml || data.vesselSpecs) : '',
     markerLine: trimmed(data.markerLine),
     forLine: trimmed(data.forLine),
     greeting: trimmed(data.greeting),
@@ -507,7 +528,7 @@ export function buildTermsRowsHtml(details) {
 
 export function buildHtmlEmailDocument(data) {
   const details = buildComputedOffer(data);
-  const vesselSpecs = parseVesselSpecs(details.vesselSpecs);
+  const vesselSpecs = parseVesselSpecs(details.vesselSpecsHtml || details.vesselSpecs);
 
   const vesselSpecsSection = vesselSpecs.lines.length
     ? `
