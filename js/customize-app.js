@@ -217,7 +217,7 @@ function renderStructuredSpecsGrid() {
     htmlLineInput.min = '1';
     htmlLineInput.value = String(specRow.htmlLine || (Math.floor(index / 2) + 1));
     htmlLineInput.title = 'HTML line group';
-    htmlLineInput.addEventListener('change', () => {
+    htmlLineInput.addEventListener('input', () => {
       const nextLine = Math.max(1, Number.parseInt(htmlLineInput.value, 10) || 1);
       const rowId = String(specRow.id || '').trim();
       specRow.htmlLine = nextLine;
