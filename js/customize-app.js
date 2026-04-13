@@ -59,7 +59,6 @@ function createWorkingCopy(source) {
 function createSpecRow(index = 0) {
   return {
     id: `spec_${Date.now()}_${index}`,
-    enabled: true,
     order: index + 1,
     label: '',
     value: '-',
@@ -74,7 +73,6 @@ function ensureVesselRecord(vessel) {
     if (legacy && typeof legacy === 'object') {
       working.vesselStructuredSpecs[vessel] = Object.entries(legacy).map(([key, value], index) => ({
         id: key,
-        enabled: true,
         order: index + 1,
         label: key,
         value: String(value ?? '').trim(),
@@ -123,7 +121,6 @@ function alignAllVesselRowsToTemplate() {
       const current = byId.get(templateRow.id);
       return {
         id: templateRow.id,
-        enabled: current?.enabled !== false,
         order: templateRow.order,
         label: templateRow.label,
         value: String(current?.value ?? '-').trim() || '-',
@@ -137,7 +134,6 @@ function alignAllVesselRowsToTemplate() {
       if (!id || templateRows.some((templateRow) => templateRow.id === id)) return;
       alignedRows.push({
         id,
-        enabled: row?.enabled !== false,
         order: alignedRows.length + 1,
         label: String(row?.label || '').trim(),
         value: String(row?.value ?? '-').trim() || '-',
@@ -177,8 +173,7 @@ function renderStructuredSpecsGrid() {
     .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0))
     .map((row, index) => ({
       ...row,
-      order: index + 1,
-      enabled: row?.enabled !== false
+      order: index + 1
     }));
 
   working.vesselStructuredSpecs[selectedVessel] = rows;
@@ -186,15 +181,6 @@ function renderStructuredSpecsGrid() {
   rows.forEach((specRow, index) => {
     const row = document.createElement('div');
     row.className = 'structured-row';
-
-    const enabledInput = document.createElement('input');
-    enabledInput.type = 'checkbox';
-    enabledInput.checked = specRow.enabled !== false;
-    enabledInput.title = 'Enabled in output';
-    enabledInput.addEventListener('change', () => {
-      specRow.enabled = enabledInput.checked;
-      refreshPreview();
-    });
 
     const orderInput = document.createElement('input');
     orderInput.type = 'number';
@@ -269,16 +255,23 @@ function renderStructuredSpecsGrid() {
     removeBtn.className = 'danger icon-btn';
     removeBtn.textContent = 'Remove';
     removeBtn.addEventListener('click', () => {
-      working.vesselStructuredSpecs[selectedVessel].splice(index, 1);
+      const rowId = String(specRow.id || '').trim();
+      if (!rowId) return;
+      (working.vesselOptions || []).forEach((vessel) => {
+        const list = Array.isArray(working.vesselStructuredSpecs[vessel])
+          ? working.vesselStructuredSpecs[vessel]
+          : [];
+        working.vesselStructuredSpecs[vessel] = list.filter((item) => String(item?.id || '').trim() !== rowId);
+      });
       renderStructuredSpecsGrid();
       refreshPreview();
+      showStatus('Structured spec row removed for all vessels.');
     });
 
     actions.appendChild(upBtn);
     actions.appendChild(downBtn);
     actions.appendChild(removeBtn);
 
-    row.appendChild(enabledInput);
     row.appendChild(orderInput);
     row.appendChild(labelInput);
     row.appendChild(valueInput);
@@ -580,12 +573,21 @@ document.getElementById('removeVesselBtn').addEventListener('click', () => {
 });
 
 addSpecRowBtn.addEventListener('click', () => {
-  ensureVesselRecord(selectedVessel);
-  const nextIndex = working.vesselStructuredSpecs[selectedVessel].length;
-  working.vesselStructuredSpecs[selectedVessel].push(createSpecRow(nextIndex));
+  const vessels = Array.isArray(working.vesselOptions) ? working.vesselOptions.filter(Boolean) : [];
+  if (!vessels.length) return;
+
+  const nextIndex = Math.max(...vessels.map((vessel) => {
+    ensureVesselRecord(vessel);
+    return working.vesselStructuredSpecs[vessel].length;
+  }), 0);
+
+  vessels.forEach((vessel) => {
+    working.vesselStructuredSpecs[vessel].push(createSpecRow(nextIndex));
+  });
+
   renderStructuredSpecsGrid();
   refreshPreview();
-  showStatus('New structured spec row added.');
+  showStatus('New structured spec row added for all vessels.');
 });
 
 vesselSelect.addEventListener('change', () => {
