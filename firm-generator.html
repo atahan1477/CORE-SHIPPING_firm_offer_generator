@@ -364,6 +364,59 @@
       line-height: 1.5;
     }
 
+    .section-subnote {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.55;
+    }
+
+    .spec-check-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .spec-check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #ffffff, #f7f9fc);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .spec-check-item input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--navy);
+      flex: 0 0 auto;
+    }
+
+    .spec-preview-box {
+      padding: 14px 16px;
+      min-height: 140px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fbfdff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
+    }
+
+    .spec-preview-box pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.65;
+      font-size: 0.9rem;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
     .hidden {
       display: none !important;
     }
@@ -634,7 +687,7 @@
       .hero-left { flex-direction: column; align-items: flex-start; }
       .hero-title-row { flex-direction: column; align-items: flex-start; }
       .logo-box { width: 100%; max-width: 330px; }
-      .grid, .grid-3 { grid-template-columns: 1fr; }
+      .grid, .grid-3, .spec-check-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 640px) {
@@ -752,6 +805,7 @@
 <body>
   <div class="page">
     <div class="top-links">
+      <a class="top-link" href="./customize.html">Customize</a>
       <a class="top-link" href="./index.html">← Back to Tools</a>
     </div>
     <div class="layout">
@@ -814,15 +868,19 @@
                   <input id="pcBasis" name="pcBasis" value="P/c basis" />
                 </div>
                 <div class="field full">
-                  <div class="switch-row">
-                    <input type="checkbox" id="includeVesselSpecs" name="includeVesselSpecs" checked />
-                    <label for="includeVesselSpecs" style="margin:0; font-weight:700; cursor:pointer;">Include selected vessel specs block in email</label>
-                  </div>
+                  <label>Vessel specs selection</label>
+                  <div class="section-subnote">Checked vessel spec lines are included in both raw and HTML emails. Edit vessels, field labels, selectables, and defaults from the Customize page.</div>
+                  <div id="vesselSpecFieldGrid" class="spec-check-grid"></div>
+                  <input type="hidden" id="selectedVesselSpecFields" name="selectedVesselSpecFields" />
+                  <input type="checkbox" id="includeVesselSpecs" name="includeVesselSpecs" class="hidden" checked />
+                  <textarea id="vesselSpecs" name="vesselSpecs" class="hidden"></textarea>
                 </div>
                 <div class="field full">
-                  <label for="vesselSpecs">Vessel specs block</label>
-                  <textarea id="vesselSpecs" name="vesselSpecs" class="specs" placeholder="Selecting a vessel will auto-fill this area. You can still edit it manually."></textarea>
-                  <div class="muted-note">This block is inserted above the offer lines in the email preview. It auto-refreshes when you change vessel unless you edit it manually.</div>
+                  <label for="vesselSpecsPreview">Generated vessel specs block</label>
+                  <div class="spec-preview-box">
+                    <pre id="vesselSpecsPreview">Select checkbox items to generate the vessel specs block.</pre>
+                  </div>
+                  <div class="muted-note">If a checked field is missing for the selected vessel, the generator will show that line as “-”. The same generated block is used in both raw and HTML mail.</div>
                 </div>
               </div>
             </div>

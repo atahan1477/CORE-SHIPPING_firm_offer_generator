@@ -3,8 +3,10 @@ import {
   getRuntimeConfig,
   saveRuntimeCustomization,
   clearRuntimeCustomization,
-  loadRuntimeCustomization,
-  slugifyFieldId
+  slugifyFieldId,
+  syncRuntimeCustomizationFromServer,
+  pushRuntimeCustomizationToServer,
+  resetRuntimeCustomizationOnServer
 } from '../shared/config.js';
 
 const optionGroups = [
@@ -18,6 +20,7 @@ const optionGroups = [
 ];
 
 const statusEl = document.getElementById('status');
+const adminPasswordInput = document.getElementById('adminPassword');
 const vesselSelect = document.getElementById('customizerVesselSelect');
 const vesselNameInput = document.getElementById('customizerVesselName');
 const rawSpecsInput = document.getElementById('customizerRawSpecs');
@@ -44,7 +47,7 @@ function showStatus(message, isError = false) {
       statusEl.textContent = '';
       statusEl.style.color = '#166a52';
     }
-  }, 3200);
+  }, 3600);
 }
 
 function createWorkingCopy(source) {
@@ -338,33 +341,71 @@ function buildCustomizationPayload() {
   return payload;
 }
 
-document.getElementById('loadSavedBtn').addEventListener('click', () => {
+function getAdminPassword() {
+  return String(adminPasswordInput?.value || '').trim();
+}
+
+async function reloadSharedCustomization(force = true) {
+  const result = await syncRuntimeCustomizationFromServer({ force });
   working = createWorkingCopy(getRuntimeConfig());
   selectedVessel = working.vesselOptions[0] || '';
   renderAll();
-  showStatus('Saved customization reloaded.');
-});
+  return result;
+}
 
-document.getElementById('saveCustomizeBtn').addEventListener('click', () => {
+document.getElementById('loadSavedBtn').addEventListener('click', async () => {
   try {
-    const saved = saveRuntimeCustomization(buildCustomizationPayload(), { source: 'customize-app' });
-    working = createWorkingCopy(saved);
-    renderAll();
-    showStatus('Customization saved. Refresh the generator page if it is already open.');
+    const result = await reloadSharedCustomization(true);
+    if (result.configured === false) {
+      showStatus('Shared storage is not configured yet. Using local/default data.', true);
+      return;
+    }
+    showStatus('Shared customization reloaded.');
   } catch (error) {
     showStatus(error.message, true);
   }
 });
 
-document.getElementById('resetAllBtn').addEventListener('click', () => {
-  if (!window.confirm('Reset all saved customizations on this domain?')) return;
-  clearRuntimeCustomization({ source: 'customize-app' });
-  working = createWorkingCopy(baseConfig);
-  working.termBehavior = clone(getRuntimeConfig().termBehavior || {});
-  selectedVessel = working.vesselOptions[0] || '';
-  renderAll();
-  customizationJson.value = '';
-  showStatus('All saved customizations were reset.');
+document.getElementById('saveCustomizeBtn').addEventListener('click', async () => {
+  try {
+    const adminPassword = getAdminPassword();
+    if (!adminPassword) {
+      throw new Error('Enter the admin save password first.');
+    }
+
+    const payload = buildCustomizationPayload();
+    const response = await pushRuntimeCustomizationToServer(payload, adminPassword);
+    working = createWorkingCopy(getRuntimeConfig());
+    selectedVessel = working.vesselOptions[0] || '';
+    renderAll();
+    showStatus(response.writable === false
+      ? 'Saved locally, but shared writing is not enabled on Vercel.'
+      : 'Shared customization saved. All users will see it after refresh.');
+  } catch (error) {
+    showStatus(error.message, true);
+  }
+});
+
+document.getElementById('resetAllBtn').addEventListener('click', async () => {
+  try {
+    if (!window.confirm('Reset the shared customization for all users?')) return;
+
+    const adminPassword = getAdminPassword();
+    if (!adminPassword) {
+      throw new Error('Enter the admin save password first.');
+    }
+
+    await resetRuntimeCustomizationOnServer(adminPassword);
+    clearRuntimeCustomization({ source: 'customize-app-reset' });
+    working = createWorkingCopy(baseConfig);
+    working.termBehavior = clone(getRuntimeConfig().termBehavior || {});
+    selectedVessel = working.vesselOptions[0] || '';
+    renderAll();
+    customizationJson.value = '';
+    showStatus('Shared customization reset. All users will see defaults after refresh.');
+  } catch (error) {
+    showStatus(error.message, true);
+  }
 });
 
 document.getElementById('exportJsonBtn').addEventListener('click', () => {
@@ -385,7 +426,7 @@ document.getElementById('importJsonBtn').addEventListener('click', () => {
     working = createWorkingCopy(parsed);
     selectedVessel = working.vesselOptions?.[0] || '';
     renderAll();
-    showStatus('Imported JSON loaded into the editor. Click Save Changes to apply it.');
+    showStatus('Imported JSON loaded into the editor. Click Save for All Users to apply it.');
   } catch (error) {
     showStatus(`Import failed: ${error.message}`, true);
   }
@@ -466,3 +507,20 @@ rawSpecsInput.addEventListener('input', () => {
 working = createWorkingCopy(getRuntimeConfig());
 selectedVessel = working.vesselOptions[0] || '';
 renderAll();
+
+(async () => {
+  try {
+    const result = await reloadSharedCustomization(true);
+    if (result.configured === false) {
+      showStatus('Shared storage is not configured yet. Generator customization is using local/default data.', true);
+      return;
+    }
+    if (result.customization) {
+      showStatus('Shared customization loaded.');
+    } else {
+      showStatus('No shared customization saved yet. Defaults are active.');
+    }
+  } catch (error) {
+    showStatus(`Shared load failed: ${error.message}`, true);
+  }
+})();

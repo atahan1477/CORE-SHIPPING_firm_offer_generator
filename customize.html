@@ -220,6 +220,22 @@
     }
 
     .status { min-height: 1rem; font-weight: 800; color: var(--success); }
+
+    .auth-bar {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+      gap: 14px;
+      align-items: end;
+    }
+
+    .auth-card {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff, #f7f9fc);
+      box-shadow: var(--shadow-soft);
+    }
     .note { color: var(--muted); font-size: 0.78rem; line-height: 1.55; }
 
     pre.preview {
@@ -243,7 +259,7 @@
     }
 
     @media (max-width: 860px) {
-      .grid, .structured-row, .repeat-row { grid-template-columns: 1fr; }
+      .grid, .structured-row, .repeat-row, .auth-bar { grid-template-columns: 1fr; }
       body { padding: 12px; }
     }
   </style>
@@ -256,15 +272,26 @@
         <a class="top-link" href="./firm-generator.html">Open Generator</a>
       </div>
       <div class="top-actions">
-        <button type="button" class="secondary" id="loadSavedBtn">Reload Saved</button>
-        <button type="button" class="danger" id="resetAllBtn">Reset Customizations</button>
-        <button type="button" class="accent" id="saveCustomizeBtn">Save Changes</button>
+        <button type="button" class="secondary" id="loadSavedBtn">Reload Shared</button>
+        <button type="button" class="danger" id="resetAllBtn">Reset Shared</button>
+        <button type="button" class="accent" id="saveCustomizeBtn">Save for All Users</button>
       </div>
     </div>
 
     <section class="hero">
       <h1>Customize Generator</h1>
-      <p>Use this page to manage the Firm Offer Generator data without editing source code. You can add or remove vessels, change vessel spec fields and labels, update selectables, adjust term meanings, and change generator defaults. Saved changes apply on this domain through browser storage, and you can export or import the full customization JSON.</p>
+      <p>Use this page to manage the Firm Offer Generator data without editing source code. You can add or remove vessels, change vessel spec fields and labels, update selectables, adjust term meanings, and change generator defaults. Shared saves are loaded through your Vercel API so all users see the same setup after refresh.</p>
+      <div class="auth-bar">
+        <div class="auth-card">
+          <div class="field">
+            <label for="adminPassword">Admin save password</label>
+            <input id="adminPassword" type="password" placeholder="Required to save or reset for all users" autocomplete="current-password" />
+          </div>
+        </div>
+        <div class="note auth-card">
+          Shared load works for everyone. Shared save and reset require the admin password that you set in Vercel environment variables. Browser import/export still works as a backup tool.
+        </div>
+      </div>
     </section>
 
     <div class="status" id="status"></div>
