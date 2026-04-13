@@ -3,9 +3,8 @@ import {
   buildEmailText,
   buildHtmlEmailDocument,
   buildMailtoUrl,
-  buildSelectedVesselSpecsBlock,
+  buildVesselSpecsBlocks,
   getTermBehavior,
-  parseSelectedSpecFieldIds,
   trimmed
 } from '../shared/offer-logic.js';
 import {
@@ -36,8 +35,7 @@ const termStructureNote = document.getElementById('termStructureNote');
 const vesselSelect = document.getElementById('vessel');
 const includeVesselSpecsInput = document.getElementById('includeVesselSpecs');
 const vesselSpecsField = document.getElementById('vesselSpecs');
-const selectedSpecFieldsInput = document.getElementById('selectedVesselSpecFields');
-const vesselSpecFieldGrid = document.getElementById('vesselSpecFieldGrid');
+const vesselSpecsHtmlField = document.getElementById('vesselSpecsHtml');
 const vesselSpecsPreview = document.getElementById('vesselSpecsPreview');
 const themeToggle = document.getElementById('themeToggle');
 const htmlPreviewFrame = document.getElementById('htmlPreviewFrame');
@@ -116,61 +114,18 @@ function collectFormData() {
   return data;
 }
 
-function renderVesselSpecFieldToggles() {
-  if (!vesselSpecFieldGrid) return;
-
-  vesselSpecFieldGrid.innerHTML = '';
-
-  runtimeConfig.vesselSpecFieldOptions.forEach((option) => {
-    const label = document.createElement('label');
-    label.className = 'spec-check-item';
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.dataset.specKey = option.id;
-
-    const text = document.createElement('span');
-    text.textContent = option.label;
-
-    label.appendChild(checkbox);
-    label.appendChild(text);
-    vesselSpecFieldGrid.appendChild(label);
-  });
-}
-
-function getSelectedSpecFieldIds() {
-  return Array.from(vesselSpecFieldGrid?.querySelectorAll('input[data-spec-key]:checked') || [])
-    .map((element) => element.dataset.specKey)
-    .filter(Boolean);
-}
-
-function setSelectedSpecFieldIds(value) {
-  const requested = parseSelectedSpecFieldIds(Array.isArray(value) ? value.join(',') : value);
-  const validIds = runtimeConfig.vesselSpecFieldOptions.map((option) => option.id);
-  const fallbackIds = parseSelectedSpecFieldIds(currentDefaults().selectedVesselSpecFields).filter((id) => validIds.includes(id));
-  const activeIds = (requested.filter((id) => validIds.includes(id)).length ? requested : fallbackIds);
-
-  if (selectedSpecFieldsInput) {
-    selectedSpecFieldsInput.value = activeIds.join(',');
-  }
-
-  Array.from(vesselSpecFieldGrid?.querySelectorAll('input[data-spec-key]') || []).forEach((element) => {
-    element.checked = activeIds.includes(element.dataset.specKey);
-  });
-}
-
 function syncStructuredVesselSpecs() {
   if (!vesselSpecsField || !vesselSelect) return;
 
-  const selectedIds = getSelectedSpecFieldIds();
-  const generatedBlock = buildSelectedVesselSpecsBlock(vesselSelect.value, runtimeConfig, selectedIds);
-
-  selectedSpecFieldsInput.value = selectedIds.join(',');
-  vesselSpecsField.value = generatedBlock;
-  includeVesselSpecsInput.checked = Boolean(selectedIds.length && trimmed(generatedBlock));
+  const generatedBlocks = buildVesselSpecsBlocks(vesselSelect.value, runtimeConfig);
+  vesselSpecsField.value = generatedBlocks.raw;
+  if (vesselSpecsHtmlField) {
+    vesselSpecsHtmlField.value = generatedBlocks.html;
+  }
+  includeVesselSpecsInput.checked = Boolean(trimmed(generatedBlocks.raw));
 
   if (vesselSpecsPreview) {
-    vesselSpecsPreview.textContent = generatedBlock || 'Select checkbox items to generate the vessel specs block.';
+    vesselSpecsPreview.textContent = generatedBlocks.raw || 'No enabled structured spec rows for the selected vessel.';
   }
 }
 
@@ -192,7 +147,6 @@ function applySnapshotToForm(snapshot) {
     });
 
     initializeSelects(snapshot);
-    setSelectedSpecFieldIds(snapshot.selectedVesselSpecFields || selectedSpecFieldsInput.value || currentDefaults().selectedVesselSpecFields);
     syncStructuredVesselSpecs();
   } finally {
     isApplyingExternalState = false;
@@ -439,10 +393,8 @@ function reinitializeForCustomizationChange() {
   const currentData = collectFormData();
   runtimeConfig = getRuntimeConfig();
 
-  renderVesselSpecFieldToggles();
   initializeSelects(currentData);
   applyTextDefaults(currentData);
-  setSelectedSpecFieldIds(currentData.selectedVesselSpecFields || currentDefaults().selectedVesselSpecFields);
   syncStructuredVesselSpecs();
   pushWholeFormToStore();
   refreshPreview();
@@ -452,9 +404,9 @@ function handleAnyInput(event) {
   if (isApplyingExternalState) return;
 
   const target = event.target;
-  if (!target || !('name' in target || target.dataset?.specKey)) return;
+  if (!target || !('name' in target)) return;
 
-  if (target.id === 'vessel' || target.dataset.specKey) {
+  if (target.id === 'vessel') {
     syncStructuredVesselSpecs();
   }
 
@@ -463,10 +415,8 @@ function handleAnyInput(event) {
 }
 
 runtimeConfig = getRuntimeConfig();
-renderVesselSpecFieldToggles();
 initializeSelects();
 applyTextDefaults();
-setSelectedSpecFieldIds(currentDefaults().selectedVesselSpecFields);
 syncStructuredVesselSpecs();
 initializeSharedState();
 initializeTheme();

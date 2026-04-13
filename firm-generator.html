@@ -847,7 +847,7 @@
             <div class="section">
               <div class="section-title">
                 <h3>1. Vessel & Cargo</h3>
-                <div class="section-tag">Specs auto-load from selection</div>
+                <div class="section-tag">Specs auto-load from structured rows</div>
               </div>
               <div class="grid">
                 <div class="field">
@@ -875,19 +875,18 @@
                   <input id="pcBasis" name="pcBasis" value="P/c basis" />
                 </div>
                 <div class="field full">
-                  <label>Vessel specs selection</label>
-                  <div class="section-subnote">Checked vessel spec lines are included in both raw and HTML emails. Edit vessels, field labels, selectables, and defaults from the Customize page.</div>
-                  <div id="vesselSpecFieldGrid" class="spec-check-grid"></div>
-                  <input type="hidden" id="selectedVesselSpecFields" name="selectedVesselSpecFields" />
+                  <label>Vessel specs</label>
+                  <div class="section-subnote">Specs are auto-generated from enabled structured vessel rows in Customize Generator.</div>
                   <input type="checkbox" id="includeVesselSpecs" name="includeVesselSpecs" class="hidden" checked />
                   <textarea id="vesselSpecs" name="vesselSpecs" class="hidden"></textarea>
+                  <textarea id="vesselSpecsHtml" name="vesselSpecsHtml" class="hidden"></textarea>
                 </div>
                 <div class="field full">
                   <label for="vesselSpecsPreview">Generated vessel specs block</label>
                   <div class="spec-preview-box">
-                    <pre id="vesselSpecsPreview">Select checkbox items to generate the vessel specs block.</pre>
+                    <pre id="vesselSpecsPreview">Select a vessel to auto-generate the vessel specs block.</pre>
                   </div>
-                  <div class="muted-note">If a checked field is missing for the selected vessel, the generator will show that line as “-”. The same generated block is used in both raw and HTML mail.</div>
+                  <div class="muted-note">Raw mail uses numbered lines. HTML mail uses compact grouped lines from the same structured rows.</div>
                 </div>
               </div>
             </div>
