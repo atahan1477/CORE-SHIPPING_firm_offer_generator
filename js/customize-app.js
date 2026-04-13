@@ -182,17 +182,7 @@ function renderStructuredSpecsGrid() {
     const row = document.createElement('div');
     row.className = 'structured-row';
 
-    const orderInput = document.createElement('input');
-    orderInput.type = 'number';
-    orderInput.className = 'mini-input';
-    orderInput.min = '1';
-    orderInput.value = String(specRow.order || (index + 1));
-    orderInput.title = 'Order';
-    orderInput.addEventListener('change', () => {
-      specRow.order = Math.max(1, Number.parseInt(orderInput.value, 10) || (index + 1));
-      renderStructuredSpecsGrid();
-      refreshPreview();
-    });
+    specRow.order = index + 1;
 
     const labelInput = document.createElement('input');
     labelInput.value = specRow.label || '';
@@ -221,38 +211,9 @@ function renderStructuredSpecsGrid() {
       refreshPreview();
     });
 
-    const actions = document.createElement('div');
-    actions.className = 'inline-actions';
-
-    const upBtn = document.createElement('button');
-    upBtn.type = 'button';
-    upBtn.className = 'secondary icon-btn';
-    upBtn.textContent = '↑';
-    upBtn.disabled = index === 0;
-    upBtn.addEventListener('click', () => {
-      if (index === 0) return;
-      const list = working.vesselStructuredSpecs[selectedVessel];
-      [list[index - 1], list[index]] = [list[index], list[index - 1]];
-      renderStructuredSpecsGrid();
-      refreshPreview();
-    });
-
-    const downBtn = document.createElement('button');
-    downBtn.type = 'button';
-    downBtn.className = 'secondary icon-btn';
-    downBtn.textContent = '↓';
-    downBtn.disabled = index === rows.length - 1;
-    downBtn.addEventListener('click', () => {
-      if (index >= rows.length - 1) return;
-      const list = working.vesselStructuredSpecs[selectedVessel];
-      [list[index + 1], list[index]] = [list[index], list[index + 1]];
-      renderStructuredSpecsGrid();
-      refreshPreview();
-    });
-
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
-    removeBtn.className = 'danger icon-btn';
+    removeBtn.className = 'danger';
     removeBtn.textContent = 'Remove';
     removeBtn.addEventListener('click', () => {
       const rowId = String(specRow.id || '').trim();
@@ -268,15 +229,10 @@ function renderStructuredSpecsGrid() {
       showStatus('Structured spec row removed for all vessels.');
     });
 
-    actions.appendChild(upBtn);
-    actions.appendChild(downBtn);
-    actions.appendChild(removeBtn);
-
-    row.appendChild(orderInput);
     row.appendChild(labelInput);
     row.appendChild(valueInput);
     row.appendChild(htmlLineInput);
-    row.appendChild(actions);
+    row.appendChild(removeBtn);
     structuredSpecsGrid.appendChild(row);
   });
 }

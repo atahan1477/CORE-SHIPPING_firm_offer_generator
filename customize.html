@@ -198,13 +198,17 @@
     .structured-grid { display: grid; gap: 10px; }
     .structured-row {
       display: grid;
-      grid-template-columns: 34px 90px minmax(160px, 0.9fr) minmax(220px, 1fr) 88px auto;
+      grid-template-columns: minmax(130px, 0.7fr) minmax(180px, 1fr) minmax(92px, 120px) auto;
       gap: 10px;
       align-items: center;
       padding: 10px 12px;
       border: 1px solid var(--border);
       border-radius: 14px;
       background: #fff;
+    }
+
+    .structured-row .danger {
+      min-width: 84px;
     }
 
     .mini-input { padding: 8px 9px; border-radius: 10px; }
@@ -333,7 +337,7 @@
 
             <div class="subsection">
               <h3>Structured vessel spec rows</h3>
-              <div class="note">Each row controls order, label, value, and optional HTML line grouping. Removing a row removes it for all vessels.</div>
+              <div class="note">Each row controls label, value, and optional HTML line grouping. Removing a row removes it for all vessels.</div>
               <div class="inline-actions">
                 <button type="button" class="secondary" id="addSpecRowBtn">+ Add spec row</button>
               </div>
