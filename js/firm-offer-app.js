@@ -515,12 +515,24 @@ document.getElementById('openDraftBtn').addEventListener('click', () => {
 });
 
 document.getElementById('openDraftHtmlBtn').addEventListener('click', async () => {
-  const html = buildHtmlEmailDocument(collectFormData());
-  const copiedRichHtml = await copyHtmlForRichPaste(html);
-  const url = buildMailtoUrl(collectFormData(), { includeBody: false });
+  const formData = collectFormData();
+  const html = buildHtmlEmailDocument(formData);
+  let copiedRichHtml = false;
+  let copyFailed = false;
+
+  try {
+    copiedRichHtml = await copyHtmlForRichPaste(html);
+  } catch (_) {
+    copyFailed = true;
+  }
+
+  const url = buildMailtoUrl(formData, { includeBody: false });
   window.location.href = url;
+
   if (copiedRichHtml) {
     showStatus('Draft opened. HTML is copied as rich content and ready to paste.');
+  } else if (copyFailed) {
+    showStatus('Draft opened, but copy failed. Paste may require manual copy from HTML Preview.');
   } else {
     showStatus('Draft opened. HTML copied as text only; rich paste may not be supported here.');
   }
