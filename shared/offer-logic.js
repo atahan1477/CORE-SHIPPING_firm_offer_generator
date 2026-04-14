@@ -534,7 +534,7 @@ export function buildHtmlEmailDocument(data) {
     ? `
           <tr>
             <td style="padding:12px 32px 0 32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:separate; border-spacing:0;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="52%" align="left" style="border-collapse:separate; border-spacing:0; width:52%;">
                 <tr>
                   <td style="padding:0;">
                     <div style="border:1px solid #cad5df; border-radius:14px; overflow:hidden; background:linear-gradient(180deg, #f7fafc 0%, #ffffff 100%); box-shadow:0 6px 18px rgba(15, 39, 66, 0.06);">
