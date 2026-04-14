@@ -16,6 +16,8 @@ import {
 const APP_SOURCE = `firm-offer-app:${Math.random().toString(36).slice(2)}`;
 const THEME_STORAGE_KEY = 'coreShippingTheme';
 const LEGACY_THEME_STORAGE_KEY = 'firmOfferGeneratorTheme';
+const LEGACY_APPLICABLE_CONTRACT_TEXT = 'Clean Gencon 94 to apply';
+const UPDATED_APPLICABLE_CONTRACT_TEXT = 'Carriers BN';
 
 let runtimeConfig = getRuntimeConfig();
 
@@ -113,6 +115,25 @@ function collectFormData() {
   });
 
   return data;
+}
+
+function migrateLegacyFormState(snapshot) {
+  const safeSnapshot = snapshot && typeof snapshot === 'object' ? snapshot : {};
+  const migrated = { ...safeSnapshot };
+
+  if (trimmed(migrated.applicableContract) === LEGACY_APPLICABLE_CONTRACT_TEXT) {
+    migrated.applicableContract = UPDATED_APPLICABLE_CONTRACT_TEXT;
+  }
+
+  const legacySuffix = trimmed(migrated.terminalSuffix);
+  if (!trimmed(migrated.polSuffix) && legacySuffix) {
+    migrated.polSuffix = legacySuffix;
+  }
+  if (!trimmed(migrated.podSuffix) && legacySuffix) {
+    migrated.podSuffix = legacySuffix;
+  }
+
+  return migrated;
 }
 
 function syncStructuredVesselSpecs() {
@@ -394,12 +415,16 @@ function pushWholeFormToStore() {
 
 function initializeSharedState() {
   const defaultSnapshot = collectFormData();
-  const persistedState = getSharedState();
+  const persistedState = migrateLegacyFormState(getSharedState());
 
   if (Object.keys(persistedState).length) {
     const merged = { ...defaultSnapshot, ...persistedState };
     applySnapshotToForm(merged);
     lastSharedStateSignature = JSON.stringify(collectFormData());
+    replaceSharedState(collectFormData(), {
+      source: APP_SOURCE,
+      broadcast: false
+    });
   } else {
     replaceSharedState(defaultSnapshot, {
       source: APP_SOURCE,
@@ -411,7 +436,7 @@ function initializeSharedState() {
   subscribeToSharedState((nextState, meta = {}) => {
     if (meta.source === APP_SOURCE) return;
 
-    const merged = { ...collectFormData(), ...nextState };
+    const merged = { ...collectFormData(), ...migrateLegacyFormState(nextState) };
     applySnapshotToForm(merged);
     refreshPreview();
   });
