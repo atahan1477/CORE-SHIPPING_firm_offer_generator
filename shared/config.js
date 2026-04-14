@@ -89,7 +89,7 @@ export const baseConfig = {
     markerLine: '++',
     forLine: 'For',
     endOfferLine: 'End offer',
-    closingParagraph: 'Pleased to hear how it develops.',
+    closingParagraph: 'Looking forward to hear',
     signOff: 'Best regards,',
     senderName: 'Your Name',
     senderTitle: 'Chartering / Operations',

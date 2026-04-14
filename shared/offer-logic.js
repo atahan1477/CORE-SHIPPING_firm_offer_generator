@@ -637,15 +637,9 @@ export function buildHtmlEmailDocument(data) {
           ${additionalClausesSection}
 
           <tr>
-            <td style="padding:14px 32px 0 32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-left:4px solid #0f2742; background-color:#f8fafc;">
-                <tr>
-                  <td style="padding:14px 16px; font-size:14px; line-height:1.7; color:#374151;">
-                    <strong style="color:#0f2742;">${escapeHtml(details.endOfferLine || 'End offer')}</strong><br>
-                    ${textToHtml(details.closingParagraph)}
-                  </td>
-                </tr>
-              </table>
+            <td style="padding:14px 32px 0 32px; font-size:14px; line-height:1.8; color:#17314e;">
+              ${textToHtml(details.endOfferLine || 'End offer')}<br><br>
+              ${textToHtml(details.closingParagraph)}
             </td>
           </tr>
 
