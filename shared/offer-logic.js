@@ -316,12 +316,20 @@ export function buildOfferText(data) {
   const isTextMode = isTextModeTerm(data.terms);
   const polSuffix = trimmed(data.polSuffix) || trimmed(data.terminalSuffix);
   const podSuffix = trimmed(data.podSuffix) || trimmed(data.terminalSuffix);
+  const includeLoadingDays = data.includeLoadingDays !== false;
+  const includeDischargingDays = data.includeDischargingDays !== false;
+  const laytimeLoadingText = includeLoadingDays
+    ? `${trimmed(data.loadingDays)} days ${trimmed(data.loadingTerms)}`.trim()
+    : trimmed(data.loadingTerms);
+  const laytimeDischargingText = includeDischargingDays
+    ? `${trimmed(data.dischargingDays)} days ${trimmed(data.dischargingTerms)}`.trim()
+    : trimmed(data.dischargingTerms);
   const loadingFinal = isTextMode
     ? trimmed(data.fltLoadingText) || 'As fast as vessel can load'
-    : `${trimmed(data.loadingDays)} days ${trimmed(data.loadingTerms)}`.trim();
+    : laytimeLoadingText;
   const dischargingFinal = isTextMode
     ? trimmed(data.fltDischargingText) || 'As fast as vessel can discharge'
-    : `${trimmed(data.dischargingDays)} days ${trimmed(data.dischargingTerms)}`.trim();
+    : laytimeDischargingText;
 
   const lines = [
     `Vessel: ${vesselFinal(data.vessel)}`,
@@ -413,12 +421,20 @@ export function buildComputedOffer(data) {
   const isTextMode = isTextModeTerm(data.terms);
   const polSuffix = trimmed(data.polSuffix) || trimmed(data.terminalSuffix);
   const podSuffix = trimmed(data.podSuffix) || trimmed(data.terminalSuffix);
+  const includeLoadingDays = data.includeLoadingDays !== false;
+  const includeDischargingDays = data.includeDischargingDays !== false;
+  const laytimeLoadingText = includeLoadingDays
+    ? `${trimmed(data.loadingDays)} days ${trimmed(data.loadingTerms)}`.trim()
+    : trimmed(data.loadingTerms);
+  const laytimeDischargingText = includeDischargingDays
+    ? `${trimmed(data.dischargingDays)} days ${trimmed(data.dischargingTerms)}`.trim()
+    : trimmed(data.dischargingTerms);
   const loadingFinal = isTextMode
     ? trimmed(data.fltLoadingText) || 'As fast as vessel can load'
-    : `${trimmed(data.loadingDays)} days ${trimmed(data.loadingTerms)}`.trim();
+    : laytimeLoadingText;
   const dischargingFinal = isTextMode
     ? trimmed(data.fltDischargingText) || 'As fast as vessel can discharge'
-    : `${trimmed(data.dischargingDays)} days ${trimmed(data.dischargingTerms)}`.trim();
+    : laytimeDischargingText;
 
   return {
     subject: trimmed(data.emailSubject) || autoSubject(data),

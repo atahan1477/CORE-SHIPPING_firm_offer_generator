@@ -69,6 +69,8 @@ export const baseConfig = {
     freightAmount: '85.00',
     demdetAmount: '10,500',
     includeCongestion: true,
+    includeLoadingDays: true,
+    includeDischargingDays: true,
     loadingDays: '2',
     loadingTerms: 'sshinc',
     dischargingDays: '2',
