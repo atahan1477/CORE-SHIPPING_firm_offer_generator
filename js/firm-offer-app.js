@@ -268,6 +268,29 @@ function buildHtmlPreviewDocument() {
   return html.replace(/<body/i, `<head>${previewStyle}</head><body`);
 }
 
+async function copyHtmlForRichPaste(htmlDocument) {
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(htmlDocument, 'text/html');
+  const htmlFragment = parsed.body?.innerHTML || htmlDocument;
+  const plainText = parsed.body?.innerText || '';
+
+  if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+    const item = new ClipboardItem({
+      'text/html': new Blob([htmlFragment], { type: 'text/html' }),
+      'text/plain': new Blob([plainText], { type: 'text/plain' })
+    });
+    await navigator.clipboard.write([item]);
+    return true;
+  }
+
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(htmlFragment);
+    return false;
+  }
+
+  return false;
+}
+
 function refreshHtmlPreview() {
   htmlPreviewFrame.setAttribute('scrolling', 'yes');
   htmlPreviewFrame.srcdoc = buildHtmlPreviewDocument();
@@ -473,9 +496,11 @@ document.getElementById('copyRawBtn').addEventListener('click', async () => {
 document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
   try {
     const html = buildHtmlEmailDocument(collectFormData());
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(html);
-      showStatus('HTML mail copied to clipboard.');
+    const copiedRichHtml = await copyHtmlForRichPaste(html);
+    if (copiedRichHtml) {
+      showStatus('HTML mail copied as rich content (paste-ready).');
+    } else if (navigator.clipboard?.writeText) {
+      showStatus('HTML copied as text only. Rich paste may not be supported in this browser.');
     } else {
       showStatus('Clipboard not available in this browser.');
     }
@@ -489,8 +514,14 @@ document.getElementById('openDraftBtn').addEventListener('click', () => {
   window.location.href = url;
 });
 
-document.getElementById('openDraftHtmlBtn').addEventListener('click', () => {
+document.getElementById('openDraftHtmlBtn').addEventListener('click', async () => {
+  const html = buildHtmlEmailDocument(collectFormData());
+  const copiedRichHtml = await copyHtmlForRichPaste(html);
   const url = buildMailtoUrl(collectFormData(), { includeBody: false });
   window.location.href = url;
-  showStatus('Draft opened. Paste the copied HTML into your mail composer.');
+  if (copiedRichHtml) {
+    showStatus('Draft opened. HTML is copied as rich content and ready to paste.');
+  } else {
+    showStatus('Draft opened. HTML copied as text only; rich paste may not be supported here.');
+  }
 });
