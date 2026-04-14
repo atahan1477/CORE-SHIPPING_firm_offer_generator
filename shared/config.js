@@ -79,7 +79,7 @@ export const baseConfig = {
     agentLoad: 'TBA',
     agentDischarge: 'TBA',
     commissionPercentage: '',
-    applicableContract: 'Clean Gencon 94 to apply',
+    applicableContract: 'Carriers BN',
     extraClauses: '',
     finalClause: 'Sub all further terms / details / indication is bss current tariffs for load/disch costs and d/a',
     emailTo: '',
