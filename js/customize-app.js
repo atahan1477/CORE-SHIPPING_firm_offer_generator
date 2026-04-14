@@ -435,7 +435,7 @@ function getAdminPassword() {
   return String(adminPasswordInput?.value || '').trim();
 }
 
-async function reloadSharedCustomization(force = true) {
+async function reloadSharedCustomization(force = false) {
   const result = await syncRuntimeCustomizationFromServer({ force });
   working = createWorkingCopy(getRuntimeConfig());
   selectedVessel = working.vesselOptions[0] || '';
@@ -574,10 +574,15 @@ vesselSelect.addEventListener('change', () => {
 });
 
 vesselNameInput.addEventListener('input', () => {
-  const next = vesselNameInput.value;
+  const next = vesselNameInput.value.trim();
   if (!selectedVessel) return;
   const index = working.vesselOptions.indexOf(selectedVessel);
   if (index === -1) return;
+  if (!next) return;
+  if (next !== selectedVessel && working.vesselOptions.includes(next)) {
+    showStatus('That vessel name already exists.', true);
+    return;
+  }
   working.vesselOptions[index] = next;
   working.vesselSpecs[next] = working.vesselSpecs[selectedVessel] || '';
   working.vesselStructuredSpecs[next] = working.vesselStructuredSpecs[selectedVessel] || {};
@@ -602,7 +607,7 @@ renderAll();
 
 (async () => {
   try {
-    const result = await reloadSharedCustomization(true);
+    const result = await reloadSharedCustomization(false);
     if (result.configured === false) {
       showStatus('Shared storage is not configured yet. Generator customization is using local/default data.', true);
       return;

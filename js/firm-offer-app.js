@@ -45,6 +45,7 @@ const fieldNames = fieldElements.map((element) => element.name);
 
 let currentView = 'raw';
 let isApplyingExternalState = false;
+let lastSharedStateSignature = '';
 
 function currentDefaults() {
   return runtimeConfig.formDefaults || {};
@@ -303,17 +304,6 @@ function refreshThemeSensitiveUI() {
   const resolvedColor = getComputedStyle(rawPreview).color;
   rawPreview.style.webkitTextFillColor = resolvedColor;
 
-  if (window.getSelection) {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount) {
-      selection.removeAllRanges();
-    }
-  }
-
-  rawPreview.style.display = 'none';
-  void rawPreview.offsetHeight;
-  rawPreview.style.display = '';
-
   if (currentView === 'html') {
     requestAnimationFrame(() => refreshHtmlPreview());
   }
@@ -361,7 +351,12 @@ function switchView(view) {
 }
 
 function pushWholeFormToStore() {
-  replaceSharedState(collectFormData(), {
+  const snapshot = collectFormData();
+  const signature = JSON.stringify(snapshot);
+  if (signature === lastSharedStateSignature) return;
+  lastSharedStateSignature = signature;
+
+  replaceSharedState(snapshot, {
     source: APP_SOURCE
   });
 }
@@ -373,11 +368,13 @@ function initializeSharedState() {
   if (Object.keys(persistedState).length) {
     const merged = { ...defaultSnapshot, ...persistedState };
     applySnapshotToForm(merged);
+    lastSharedStateSignature = JSON.stringify(collectFormData());
   } else {
     replaceSharedState(defaultSnapshot, {
       source: APP_SOURCE,
       broadcast: false
     });
+    lastSharedStateSignature = JSON.stringify(defaultSnapshot);
   }
 
   subscribeToSharedState((nextState, meta = {}) => {
@@ -424,7 +421,7 @@ refreshPreview();
 
 (async () => {
   try {
-    const result = await syncRuntimeCustomizationFromServer({ force: true });
+    const result = await syncRuntimeCustomizationFromServer({ force: false });
     if (result.configured && result.customization) {
       showStatus('Shared customization loaded.');
     }
@@ -437,13 +434,6 @@ subscribeToRuntimeCustomization((_, meta = {}) => {
   if (meta.source === APP_SOURCE) return;
   reinitializeForCustomizationChange();
 }, { immediate: false });
-
-vesselSelect.addEventListener('change', () => {
-  if (isApplyingExternalState) return;
-  syncStructuredVesselSpecs();
-  pushWholeFormToStore();
-  refreshPreview();
-});
 
 form.addEventListener('input', handleAnyInput);
 form.addEventListener('change', handleAnyInput);

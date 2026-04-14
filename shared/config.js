@@ -587,10 +587,9 @@ export async function syncRuntimeCustomizationFromServer(options = {}) {
 
     let response;
     try {
-      response = await fetch(`${REMOTE_CUSTOMIZATION_ENDPOINT}?ts=${Date.now()}`, {
+      response = await fetch(REMOTE_CUSTOMIZATION_ENDPOINT, {
         method: 'GET',
-        headers: { Accept: 'application/json' },
-        cache: 'no-store'
+        headers: { Accept: 'application/json' }
       });
     } catch (error) {
       return {

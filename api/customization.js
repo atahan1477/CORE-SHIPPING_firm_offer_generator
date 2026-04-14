@@ -4,11 +4,15 @@ const { list, put, del } = require('@vercel/blob');
 const BLOB_PATHNAME = process.env.CUSTOMIZATION_BLOB_PATH || 'core-shipping/shared-customization.json';
 const ADMIN_PASSWORD = process.env.CUSTOMIZATION_ADMIN_PASSWORD || '';
 const HAS_BLOB_TOKEN = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+const READ_CACHE_TTL_MS = 30000;
 
-function sendJson(response, status, payload) {
+let readCache = null;
+let lastKnownBlobUrl = '';
+
+function sendJson(response, status, payload, cacheControl = 'no-store, max-age=0') {
   response.statusCode = status;
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
-  response.setHeader('Cache-Control', 'no-store, max-age=0');
+  response.setHeader('Cache-Control', cacheControl);
   response.end(JSON.stringify(payload));
 }
 
@@ -47,19 +51,76 @@ async function findLatestCustomizationBlob() {
   return matches[0] || null;
 }
 
-async function readStoredCustomization() {
-  if (!HAS_BLOB_TOKEN) {
-    return {
-      configured: false,
-      writable: false,
-      customization: null,
-      meta: {}
-    };
+function buildNotConfiguredResult() {
+  return {
+    configured: false,
+    writable: false,
+    customization: null,
+    meta: {}
+  };
+}
+
+function isReadCacheFresh() {
+  return Boolean(readCache && (Date.now() - readCache.cachedAt) < READ_CACHE_TTL_MS);
+}
+
+function saveReadCache(result) {
+  readCache = {
+    cachedAt: Date.now(),
+    value: result
+  };
+  if (result?.meta?.blobUrl) {
+    lastKnownBlobUrl = result.meta.blobUrl;
+  }
+}
+
+function clearReadCache() {
+  readCache = null;
+}
+
+async function readBlobPayload(blobUrl) {
+  const fileResponse = await fetch(blobUrl, {
+    headers: { Accept: 'application/json' }
+  });
+
+  if (!fileResponse.ok) {
+    throw new Error('Stored customization file could not be read.');
   }
 
-  const blob = await findLatestCustomizationBlob();
+  return fileResponse.json();
+}
+
+async function readStoredCustomization(options = {}) {
+  const { forceRefresh = false } = options;
+
+  if (!HAS_BLOB_TOKEN) {
+    const result = buildNotConfiguredResult();
+    saveReadCache(result);
+    return result;
+  }
+
+  if (!forceRefresh && isReadCacheFresh()) {
+    return readCache.value;
+  }
+
+  let blob = null;
+  let payload = null;
+
+  if (lastKnownBlobUrl) {
+    try {
+      payload = await readBlobPayload(lastKnownBlobUrl);
+      blob = { pathname: BLOB_PATHNAME, url: lastKnownBlobUrl, uploadedAt: payload?.updatedAt || null };
+    } catch (_) {
+      lastKnownBlobUrl = '';
+    }
+  }
+
   if (!blob) {
-    return {
+    blob = await findLatestCustomizationBlob();
+  }
+
+  if (!blob) {
+    const result = {
       configured: true,
       writable: isWritable(),
       customization: null,
@@ -68,23 +129,16 @@ async function readStoredCustomization() {
         exists: false
       }
     };
+    saveReadCache(result);
+    return result;
   }
 
-  const fileResponse = await fetch(`${blob.url}?ts=${Date.now()}`, {
-    cache: 'no-store',
-    headers: { Accept: 'application/json' }
-  });
-
-  if (!fileResponse.ok) {
-    throw new Error('Stored customization file could not be read.');
-  }
-
-  const payload = await fileResponse.json();
+  payload = payload || await readBlobPayload(blob.url);
   const customization = payload && typeof payload.customization === 'object' && !Array.isArray(payload.customization)
     ? payload.customization
     : null;
 
-  return {
+  const result = {
     configured: true,
     writable: isWritable(),
     customization,
@@ -96,6 +150,8 @@ async function readStoredCustomization() {
       updatedAt: payload?.updatedAt || null
     }
   };
+  saveReadCache(result);
+  return result;
 }
 
 function passwordsMatch(candidate) {
@@ -109,7 +165,8 @@ function passwordsMatch(candidate) {
   return crypto.timingSafeEqual(expected, received);
 }
 
-async function requireAdminPassword(request) {
+async function requireAdminPassword(request, options = {}) {
+  const { readBody = false } = options;
   if (!HAS_BLOB_TOKEN) {
     return { ok: false, status: 503, error: 'Shared Vercel Blob storage is not configured yet.' };
   }
@@ -118,16 +175,32 @@ async function requireAdminPassword(request) {
     return { ok: false, status: 503, error: 'CUSTOMIZATION_ADMIN_PASSWORD is not configured yet.' };
   }
 
-  let body = {};
-  try {
-    body = await readJsonBody(request);
-  } catch (_) {
-    return { ok: false, status: 400, error: 'Request body must be valid JSON.' };
-  }
-
   const headerPassword = safeTrim(request.headers['x-customize-password']);
   if (headerPassword && passwordsMatch(headerPassword)) {
+    if (!readBody) return { ok: true, body: {} };
+
+    let body = {};
+    try {
+      body = await readJsonBody(request);
+    } catch (_) {
+      return { ok: false, status: 400, error: 'Request body must be valid JSON.' };
+    }
     return { ok: true, body };
+  }
+
+  let body = {};
+  if (readBody) {
+    try {
+      body = await readJsonBody(request);
+    } catch (_) {
+      return { ok: false, status: 400, error: 'Request body must be valid JSON.' };
+    }
+  } else {
+    try {
+      body = await readJsonBody(request);
+    } catch (_) {
+      body = {};
+    }
   }
 
   const bodyPassword = safeTrim(body.adminPassword);
@@ -162,7 +235,7 @@ async function handleGet(request, response) {
 }
 
 async function handlePost(request, response) {
-  const auth = await requireAdminPassword(request);
+  const auth = await requireAdminPassword(request, { readBody: true });
   if (!auth.ok) {
     sendJson(response, auth.status, { ok: false, error: auth.error });
     return;
@@ -187,13 +260,24 @@ async function handlePost(request, response) {
       cacheControlMaxAge: 0
     });
 
-    const latest = await readStoredCustomization();
+    const meta = {
+      pathname: BLOB_PATHNAME,
+      exists: true,
+      blobUrl: lastKnownBlobUrl || null,
+      updatedAt
+    };
+    saveReadCache({
+      configured: true,
+      writable: true,
+      customization,
+      meta
+    });
     sendJson(response, 200, {
       ok: true,
       configured: true,
       writable: true,
       customization,
-      meta: latest.meta,
+      meta,
       message: 'Shared customization saved.'
     });
   } catch (error) {
@@ -205,7 +289,7 @@ async function handlePost(request, response) {
 }
 
 async function handleDelete(request, response) {
-  const auth = await requireAdminPassword(request);
+  const auth = await requireAdminPassword(request, { readBody: false });
   if (!auth.ok) {
     sendJson(response, auth.status, { ok: false, error: auth.error });
     return;
@@ -217,6 +301,8 @@ async function handleDelete(request, response) {
       await del(blob.url);
     }
 
+    clearReadCache();
+    lastKnownBlobUrl = '';
     sendJson(response, 200, {
       ok: true,
       configured: true,
