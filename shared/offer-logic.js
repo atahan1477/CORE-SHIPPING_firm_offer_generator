@@ -216,7 +216,7 @@ export function buildVesselSpecsBlocks(vessel, runtimeConfig) {
   if (!enabledRows.length) return { raw: '', html: '' };
 
   const separator = base.length > 16 ? '----------------------' : '---------------';
-  const rawLines = enabledRows.map((row, index) => `${index + 1}. ${row.label || '-'}: ${row.value || '-'}`);
+  const rawLines = enabledRows.map((row) => `${row.label || '-'}: ${row.value || '-'}`);
   const htmlGroups = new Map();
   enabledRows.forEach((row) => {
     const lineNo = row.htmlLine || 1;
