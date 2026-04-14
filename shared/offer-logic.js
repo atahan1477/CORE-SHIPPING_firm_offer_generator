@@ -638,7 +638,7 @@ export function buildHtmlEmailDocument(data) {
 
           <tr>
             <td style="padding:14px 32px 0 32px; font-size:14px; line-height:1.8; color:#17314e;">
-              ${textToHtml(details.endOfferLine || 'End offer')}<br>
+              ${textToHtml(details.endOfferLine || 'End offer')}<br><br>
               ${textToHtml(details.closingParagraph)}
             </td>
           </tr>
