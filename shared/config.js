@@ -81,7 +81,7 @@ export const baseConfig = {
     commissionPercentage: '',
     applicableContract: 'Carriers BN',
     extraClauses: '',
-    finalClause: 'Sub all further terms / details / indication is bss current tariffs for load/disch costs and d/a',
+    finalClause: 'Sub all further terms / conditions\nIndication is based on current tariffs for load/disch costs and d/as',
     emailTo: '',
     emailCc: '',
     emailSubject: '',
