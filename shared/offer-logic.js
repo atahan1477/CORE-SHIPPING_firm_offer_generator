@@ -374,8 +374,9 @@ export function buildOfferText(data) {
     lines.push(...extraClauses);
   }
 
-  if (trimmed(data.finalClause)) {
-    lines.push(trimmed(data.finalClause));
+  const finalClauses = clauseLinesFromText(data.finalClause);
+  if (finalClauses.length) {
+    lines.push(...finalClauses);
   }
 
   return lines
@@ -458,6 +459,7 @@ export function buildComputedOffer(data) {
     commission: commissionFinal(data.commissionPercentage),
     applicableContract: trimmed(data.applicableContract),
     extraClauses: clauseLinesFromText(data.extraClauses),
+    finalClauses: clauseLinesFromText(data.finalClause),
     finalClause: trimmed(data.finalClause),
     vesselSpecs: data.includeVesselSpecs ? trimmed(data.vesselSpecs) : '',
     vesselSpecsHtml: data.includeVesselSpecs ? trimmed(data.vesselSpecsHtml || data.vesselSpecs) : '',
@@ -577,7 +579,7 @@ export function buildHtmlEmailDocument(data) {
           </tr>`
     : '';
 
-  const additionalClausesSection = (details.extraClauses.length || details.finalClause)
+  const additionalClausesSection = (details.extraClauses.length || details.finalClauses.length)
     ? `
           <tr>
             <td style="padding:12px 32px 0 32px;">
@@ -591,10 +593,10 @@ export function buildHtmlEmailDocument(data) {
                 <tr>
                   <td style="padding:11px 18px; border-bottom:1px solid #e2e8ef; font-size:14px; line-height:1.6; color:#17314e;">${textToHtml(line)}</td>
                 </tr>`).join('')}
-                ${details.finalClause ? `
+                ${(details.finalClauses || []).map((line) => `
                 <tr>
-                  <td style="padding:11px 18px; font-size:14px; line-height:1.6; color:#17314e; font-weight:600;">${textToHtml(details.finalClause)}</td>
-                </tr>` : ''}
+                  <td style="padding:11px 18px; font-size:14px; line-height:1.6; color:#17314e; font-weight:600;">${textToHtml(line)}</td>
+                </tr>`).join('')}
               </table>
             </td>
           </tr>`
