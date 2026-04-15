@@ -439,7 +439,11 @@ function customizationDefaultsChanged() {
   try {
     const previousSignature = localStorage.getItem(CUSTOMIZATION_SIGNATURE_KEY);
     localStorage.setItem(CUSTOMIZATION_SIGNATURE_KEY, currentSignature);
-    return Boolean(previousSignature && previousSignature !== currentSignature);
+    if (previousSignature === null) {
+      return true;
+    }
+
+    return previousSignature !== currentSignature;
   } catch (_) {
     return false;
   }
