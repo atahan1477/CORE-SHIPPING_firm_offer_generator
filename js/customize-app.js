@@ -655,20 +655,4 @@ rawSpecsInput.addEventListener('input', () => {
 working = createWorkingCopy(getRuntimeConfig());
 selectedVessel = working.vesselOptions[0] || '';
 renderAll();
-
-(async () => {
-  try {
-    const result = await reloadSharedCustomization(false);
-    if (result.configured === false) {
-      showStatus('Shared storage is not configured yet. Generator customization is using local/default data.', true);
-      return;
-    }
-    if (result.customization) {
-      showStatus('Shared customization loaded.');
-    } else {
-      showStatus('No shared customization saved yet. Defaults are active.');
-    }
-  } catch (error) {
-    showStatus(`Shared load failed: ${error.message}`, true);
-  }
-})();
+showStatus('Loaded local customization snapshot. Click "Reload Shared from Vercel" only when you need to sync.');
