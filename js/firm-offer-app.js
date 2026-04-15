@@ -18,6 +18,7 @@ const THEME_STORAGE_KEY = 'coreShippingTheme';
 const LEGACY_THEME_STORAGE_KEY = 'firmOfferGeneratorTheme';
 const LEGACY_APPLICABLE_CONTRACT_TEXT = 'Clean Gencon 94 to apply';
 const UPDATED_APPLICABLE_CONTRACT_TEXT = 'Carriers BN';
+const CUSTOMIZATION_SIGNATURE_KEY = 'coreShippingCustomizationSignatureV1';
 
 let runtimeConfig = getRuntimeConfig();
 
@@ -427,9 +428,27 @@ function pushWholeFormToStore() {
   });
 }
 
-function initializeSharedState() {
+
+function currentCustomizationSignature() {
+  return JSON.stringify(currentDefaults());
+}
+
+function customizationDefaultsChanged() {
+  const currentSignature = currentCustomizationSignature();
+
+  try {
+    const previousSignature = localStorage.getItem(CUSTOMIZATION_SIGNATURE_KEY);
+    localStorage.setItem(CUSTOMIZATION_SIGNATURE_KEY, currentSignature);
+    return Boolean(previousSignature && previousSignature !== currentSignature);
+  } catch (_) {
+    return false;
+  }
+}
+
+function initializeSharedState(options = {}) {
+  const { forceDefaults = false } = options;
   const defaultSnapshot = collectFormData();
-  const persistedState = migrateLegacyFormState(getSharedState());
+  const persistedState = forceDefaults ? {} : migrateLegacyFormState(getSharedState());
 
   if (Object.keys(persistedState).length) {
     const merged = { ...defaultSnapshot, ...persistedState };
@@ -485,7 +504,7 @@ runtimeConfig = getRuntimeConfig();
 initializeSelects();
 applyTextDefaults();
 syncStructuredVesselSpecs();
-initializeSharedState();
+initializeSharedState({ forceDefaults: customizationDefaultsChanged() });
 initializeTheme();
 refreshPreview();
 
