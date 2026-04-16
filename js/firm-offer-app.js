@@ -8,6 +8,18 @@ import {
   trimmed
 } from '../shared/offer-logic.js';
 import {
+  fromLegacyFormData,
+  toLegacyRenderInput
+} from '../shared/document-model.js';
+import {
+  createDocumentFromDraft,
+  saveDocumentVersion,
+  listDocumentVersions,
+  compareDocumentVersions,
+  updateDocumentStatus,
+  buildCertifiedExportMetadata
+} from '../shared/document-store.js';
+import {
   getSharedState,
   replaceSharedState,
   subscribeToSharedState
@@ -55,6 +67,8 @@ const fieldNames = fieldElements.map((element) => element.name);
 let currentView = 'raw';
 let isApplyingExternalState = false;
 let lastSharedStateSignature = '';
+let currentDocumentId = '';
+let currentDraft = null;
 
 function currentDefaults() {
   return runtimeConfig.formDefaults || {};
@@ -122,6 +136,16 @@ function collectFormData() {
   });
 
   return data;
+}
+
+function collectCanonicalDraft() {
+  const legacyData = collectFormData();
+  currentDraft = fromLegacyFormData(legacyData, runtimeConfig);
+  return currentDraft;
+}
+
+function getRenderInput() {
+  return toLegacyRenderInput(collectCanonicalDraft());
 }
 
 function migrateLegacyFormState(snapshot) {
@@ -232,7 +256,7 @@ function updateConditionalUI() {
 }
 
 function buildHtmlPreviewDocument() {
-  const html = buildHtmlEmailDocument(collectFormData());
+  const html = buildHtmlEmailDocument(getRenderInput());
   const isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
   const previewCanvas = isDarkTheme ? '#101926' : '#eef3f7';
   const previewText = isDarkTheme ? '#dbe6f3' : '#17314f';
@@ -336,7 +360,7 @@ function refreshPreview() {
   updateConditionalUI();
   syncStructuredVesselSpecs();
 
-  const data = collectFormData();
+  const data = getRenderInput();
   const emailText = buildEmailText(data);
 
   subjectPreview.textContent = emailText.subject;
@@ -354,6 +378,111 @@ function showStatus(message) {
   setTimeout(() => {
     if (statusEl.textContent === message) statusEl.textContent = '';
   }, 2600);
+}
+
+function saveCurrentVersionFromUI() {
+  try {
+    const draft = collectCanonicalDraft();
+    if (!currentDocumentId) {
+      const doc = createDocumentFromDraft(draft, {
+        title: draft.metadata.title
+      });
+      currentDocumentId = doc.id;
+    }
+
+    const saved = saveDocumentVersion(currentDocumentId, draft, {
+      createdBy: 'local-user',
+      updatedBy: 'local-user'
+    });
+    showStatus(`Saved version v${saved.version}.`);
+  } catch (error) {
+    console.error(error);
+    showStatus('Save version failed.');
+  }
+}
+
+function compareLatestVersionsFromUI() {
+  if (!currentDocumentId) {
+    showStatus('No document available for compare yet.');
+    return;
+  }
+
+  try {
+    const versions = listDocumentVersions(currentDocumentId);
+    if (versions.length < 2) {
+      showStatus('Need at least 2 versions to compare.');
+      return;
+    }
+
+    const latest = versions[versions.length - 1];
+    const previous = versions[versions.length - 2];
+    const comparison = compareDocumentVersions(currentDocumentId, previous.version, latest.version);
+    if (!comparison.hasChanges) {
+      showStatus(`Compared v${previous.version} vs v${latest.version}: no changes.`);
+      return;
+    }
+    showStatus(`Compared v${previous.version}→v${latest.version}: ${comparison.changedFields.join(', ')}`);
+  } catch (error) {
+    console.error(error);
+    showStatus('Compare failed.');
+  }
+}
+
+function initializeDocumentDraft() {
+  const draft = collectCanonicalDraft();
+  const doc = createDocumentFromDraft(draft, {
+    title: draft.metadata.title
+  });
+  currentDocumentId = doc.id;
+  saveDocumentVersion(currentDocumentId, draft, {
+    createdBy: 'local-user',
+    updatedBy: 'local-user'
+  });
+}
+
+function injectDocumentControls() {
+  const btnGroupRaw = document.getElementById('btnGroupRaw');
+  const viewBar = document.querySelector('.view-bar');
+  if (!btnGroupRaw || !viewBar) return;
+
+  const saveVersionBtn = document.createElement('button');
+  saveVersionBtn.type = 'button';
+  saveVersionBtn.className = 'secondary';
+  saveVersionBtn.id = 'saveVersionBtn';
+  saveVersionBtn.textContent = 'Save Version';
+  saveVersionBtn.addEventListener('click', saveCurrentVersionFromUI);
+
+  const compareBtn = document.createElement('button');
+  compareBtn.type = 'button';
+  compareBtn.className = 'secondary';
+  compareBtn.id = 'compareVersionsBtn';
+  compareBtn.textContent = 'Compare Latest';
+  compareBtn.addEventListener('click', compareLatestVersionsFromUI);
+
+  const statusSelect = document.createElement('select');
+  statusSelect.id = 'docStatusSelect';
+  statusSelect.style.maxWidth = '180px';
+  ['draft', 'internal_review', 'approved', 'final'].forEach((status) => {
+    const option = document.createElement('option');
+    option.value = status;
+    option.textContent = status.replace('_', ' ');
+    statusSelect.appendChild(option);
+  });
+  statusSelect.addEventListener('change', () => {
+    if (!currentDocumentId) return;
+    try {
+      updateDocumentStatus(currentDocumentId, statusSelect.value, { updatedBy: 'local-user' });
+      const metadata = buildCertifiedExportMetadata(currentDocumentId);
+      showStatus(`Status updated to ${metadata.status}.`);
+    } catch (error) {
+      console.error(error);
+      showStatus('Status update failed.');
+    }
+  });
+
+  btnGroupRaw.prepend(compareBtn);
+  btnGroupRaw.prepend(saveVersionBtn);
+  viewBar.appendChild(statusSelect);
 }
 
 function refreshThemeSensitiveUI() {
@@ -509,6 +638,8 @@ initializeSelects();
 applyTextDefaults();
 syncStructuredVesselSpecs();
 initializeSharedState({ forceDefaults: customizationDefaultsChanged() });
+initializeDocumentDraft();
+injectDocumentControls();
 initializeTheme();
 refreshPreview();
 
@@ -543,7 +674,7 @@ document.getElementById('tabHtml').addEventListener('click', () => switchView('h
 
 document.getElementById('copyRawBtn').addEventListener('click', async () => {
   try {
-    const emailText = buildEmailText(collectFormData());
+    const emailText = buildEmailText(getRenderInput());
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(emailText.body);
       showStatus('Raw mail copied to clipboard.');
@@ -557,7 +688,7 @@ document.getElementById('copyRawBtn').addEventListener('click', async () => {
 
 document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
   try {
-    const html = buildHtmlEmailDocument(collectFormData());
+    const html = buildHtmlEmailDocument(getRenderInput());
     const copiedRichHtml = await copyHtmlForRichPaste(html);
     if (copiedRichHtml) {
       showStatus('HTML mail copied as rich content (paste-ready).');
@@ -572,12 +703,12 @@ document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('openDraftBtn').addEventListener('click', () => {
-  const url = buildMailtoUrl(collectFormData(), { includeBody: true });
+  const url = buildMailtoUrl(getRenderInput(), { includeBody: true });
   window.location.href = url;
 });
 
 document.getElementById('openDraftHtmlBtn').addEventListener('click', async () => {
-  const formData = collectFormData();
+  const formData = getRenderInput();
   const html = buildHtmlEmailDocument(formData);
   let copiedRichHtml = false;
   let copyFailed = false;
