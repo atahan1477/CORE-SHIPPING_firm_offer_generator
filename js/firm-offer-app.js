@@ -265,6 +265,7 @@ function buildHtmlPreviewDocument() {
           body {
             font-family: Arial, Helvetica, sans-serif !important;
             -webkit-font-smoothing: antialiased !important;
+            padding: 10px 0 !important;
           }
 
           table {
@@ -275,6 +276,8 @@ function buildHtmlPreviewDocument() {
             width: min(760px, calc(100vw - 24px)) !important;
             max-width: min(760px, calc(100vw - 24px)) !important;
             box-shadow: 0 14px 30px rgba(15, 23, 36, ${isDarkTheme ? 0.34 : 0.10}) !important;
+            border-radius: 14px !important;
+            overflow: hidden !important;
           }
 
           td {
@@ -293,6 +296,10 @@ function buildHtmlPreviewDocument() {
 
           body > table[role="presentation"] > tbody > tr > td > table[role="presentation"] {
             border-color: ${previewEdge} !important;
+          }
+
+          .email-wrap {
+            margin: 0 auto !important;
           }
         </style>
       `;

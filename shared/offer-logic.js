@@ -545,10 +545,10 @@ export function buildTermsRowsHtml(details) {
 
   return rows
     .filter(([, value]) => trimmed(value))
-    .map(([label, value]) => `
+    .map(([label, value], rowIndex) => `
                 <tr>
-                  <td width="29%" style="padding:11px 16px; border-bottom:1px solid #e2e8ef; background-color:#fafbfd; font-size:13px; font-weight:700; color:#334155; vertical-align:top;">${escapeHtml(label)}</td>
-                  <td width="71%" style="padding:11px 16px; border-bottom:1px solid #e2e8ef; font-size:14px; line-height:1.6; color:#17314e;">${textToHtml(value)}</td>
+                  <td width="29%" style="padding:12px 16px; border-bottom:1px solid #dbe4ee; background-color:${rowIndex % 2 === 0 ? '#f8fbff' : '#f3f7fc'}; font-size:13px; font-weight:700; color:#30465f; vertical-align:top;">${escapeHtml(label)}</td>
+                  <td width="71%" style="padding:12px 16px; border-bottom:1px solid #dbe4ee; background-color:#ffffff; font-size:14px; line-height:1.65; color:#132f4b;">${textToHtml(value)}</td>
                 </tr>`)
     .join('');
 }
@@ -560,15 +560,15 @@ export function buildHtmlEmailDocument(data) {
   const vesselSpecsSection = vesselSpecs.lines.length
     ? `
           <tr>
-            <td style="padding:12px 32px 0 32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="52%" align="left" style="border-collapse:separate; border-spacing:0; width:52%;">
+            <td class="email-pad" style="padding:12px 32px 0 32px;">
+              <table role="presentation" class="stack-table" cellpadding="0" cellspacing="0" border="0" width="52%" align="left" style="border-collapse:separate; border-spacing:0; width:52%;">
                 <tr>
                   <td style="padding:0;">
-                    <div style="border:1px solid #cad5df; border-radius:14px; overflow:hidden; background:linear-gradient(180deg, #f7fafc 0%, #ffffff 100%); box-shadow:0 6px 18px rgba(15, 39, 66, 0.06);">
-                      <div style="padding:14px 18px; background-color:#eef3f8; border-bottom:1px solid #d8e1ea;">
+                    <div style="border:1px solid #cad7e4; border-radius:14px; overflow:hidden; background:linear-gradient(180deg, #f7fafc 0%, #ffffff 100%); box-shadow:0 6px 18px rgba(15, 39, 66, 0.06);">
+                      <div style="padding:14px 18px; background-color:#edf4fb; border-bottom:1px solid #d4deea;">
                         <div style="font-size:18px; font-weight:700; color:#0f2742;">${escapeHtml(vesselSpecs.title || 'Vessel Particulars')}</div>
                       </div>
-                      <div style="padding:14px 18px; font-size:14px; line-height:1.7; color:#17314e;">
+                      <div style="padding:14px 18px; font-size:14px; line-height:1.75; color:#17314e;">
                         ${vesselSpecs.lines.map((line) => `<div style="margin:0 0 6px 0;">${textToHtml(line)}</div>`).join('')}
                       </div>
                     </div>
@@ -582,10 +582,10 @@ export function buildHtmlEmailDocument(data) {
   const additionalClausesSection = (details.extraClauses.length || details.finalClauses.length)
     ? `
           <tr>
-            <td style="padding:12px 32px 0 32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #cad5df; border-collapse:collapse;">
+            <td class="email-pad" style="padding:12px 32px 0 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #cad7e4; border-collapse:collapse;">
                 <tr>
-                  <td style="padding:14px 18px; background-color:#eef3f8; border-bottom:1px solid #cad5df;">
+                  <td style="padding:14px 18px; background-color:#edf4fb; border-bottom:1px solid #cad7e4;">
                     <div style="font-size:18px; font-weight:700; color:#0f2742;">Additional Clauses</div>
                   </td>
                 </tr>
@@ -608,21 +608,53 @@ export function buildHtmlEmailDocument(data) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(details.subject)}</title>
+  <style>
+    @media only screen and (max-width: 680px) {
+      .email-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .email-pad {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+
+      .email-title {
+        font-size: 21px !important;
+      }
+
+      .email-subject {
+        font-size: 12px !important;
+        line-height: 1.55 !important;
+      }
+
+      .email-copy {
+        font-size: 14px !important;
+        line-height: 1.7 !important;
+      }
+
+      .stack-table {
+        width: 100% !important;
+      }
+    }
+  </style>
 </head>
 <body style="margin:0; padding:0; background-color:#f3f5f7; font-family:Arial, Helvetica, sans-serif; color:#1f2937;">
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent;">${escapeHtml(details.subject)}</div>
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f3f5f7; margin:0; padding:24px 0;">
     <tr>
       <td align="center">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="760" style="width:760px; max-width:760px; background-color:#ffffff; border:1px solid #d9e0e7; border-collapse:collapse;">
+        <table role="presentation" class="email-wrap" cellpadding="0" cellspacing="0" border="0" width="760" style="width:760px; max-width:760px; background-color:#ffffff; border:1px solid #d6e0ea; border-collapse:separate; border-spacing:0; border-radius:14px; overflow:hidden;">
           <tr>
-            <td style="padding:28px 32px 20px 32px; background-color:#0f2742;">
+            <td class="email-pad" style="padding:28px 32px 20px 32px; background:linear-gradient(180deg, #0f2742 0%, #14375b 100%);">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td align="left" style="color:#ffffff; font-size:24px; font-weight:700; letter-spacing:0.3px;">CORE SHIPPING</td>
+                  <td align="left" class="email-title" style="color:#ffffff; font-size:24px; font-weight:700; letter-spacing:0.3px;">CORE SHIPPING</td>
                   <td align="right" style="color:#c8d5e3; font-size:12px; text-transform:uppercase; letter-spacing:1.2px;">Firm Offer</td>
                 </tr>
                 <tr>
-                  <td colspan="2" style="padding-top:10px; color:#dbe5ef; font-size:13px; line-height:1.6;">
+                  <td colspan="2" class="email-subject" style="padding-top:10px; color:#dbe5ef; font-size:13px; line-height:1.6;">
                     Subject: ${escapeHtml(details.subject)}
                   </td>
                 </tr>
@@ -631,14 +663,14 @@ export function buildHtmlEmailDocument(data) {
           </tr>
 
           <tr>
-            <td style="padding:26px 32px 8px 32px; font-size:15px; line-height:1.75; color:#17314e;">
+            <td class="email-pad email-copy" style="padding:26px 32px 8px 32px; font-size:15px; line-height:1.75; color:#17314e;">
               ${textToHtml(details.greeting)}<br><br>
               ${textToHtml(details.openingParagraph)}
             </td>
           </tr>
 
           <tr>
-            <td style="padding:0 32px 0 32px; font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:#6b7c8f; font-weight:700;">
+            <td class="email-pad" style="padding:0 32px 0 32px; font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:#6b7c8f; font-weight:700;">
               ${escapeHtml(details.markerLine || '++')}
             </td>
           </tr>
@@ -646,13 +678,13 @@ export function buildHtmlEmailDocument(data) {
           ${vesselSpecsSection}
 
           <tr>
-            <td style="padding:12px 32px 0 32px;">
+            <td class="email-pad" style="padding:12px 32px 0 32px;">
               <div style="font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:#6b7c8f; font-weight:700; padding:0 0 8px 2px;">
                 ${escapeHtml(details.forLine || 'For')}
               </div>
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #cad5df; border-collapse:collapse;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #cad7e4; border-collapse:collapse;">
                 <tr>
-                  <td colspan="2" style="padding:14px 18px; background-color:#eef3f8; border-bottom:1px solid #cad5df;">
+                  <td colspan="2" style="padding:14px 18px; background-color:#edf4fb; border-bottom:1px solid #cad7e4;">
                     <div style="font-size:18px; font-weight:700; color:#0f2742;">Commercial Terms</div>
                   </td>
                 </tr>
@@ -664,14 +696,14 @@ export function buildHtmlEmailDocument(data) {
           ${additionalClausesSection}
 
           <tr>
-            <td style="padding:14px 32px 0 32px; font-size:14px; line-height:1.8; color:#17314e;">
+            <td class="email-pad email-copy" style="padding:14px 32px 0 32px; font-size:14px; line-height:1.8; color:#17314e;">
               ${textToHtml(details.endOfferLine || 'End offer')}<br><br>
               ${textToHtml(details.closingParagraph)}
             </td>
           </tr>
 
           <tr>
-            <td style="padding:24px 32px 32px 32px; font-size:14px; line-height:1.8; color:#17314e;">
+            <td class="email-pad email-copy" style="padding:24px 32px 32px 32px; font-size:14px; line-height:1.8; color:#17314e;">
               ${textToHtml(details.signature)}
             </td>
           </tr>
