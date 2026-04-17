@@ -128,6 +128,21 @@
         <label for="draftBody">Body</label>
         <textarea id="draftBody" style="min-height:380px;"></textarea>
       </div>
+
+      <div class="field">
+        <label for="confidenceScore">Confidence score</label>
+        <input id="confidenceScore" readonly />
+      </div>
+      <div class="field">
+        <label for="policyAudit">Policy audit trail</label>
+        <textarea id="policyAudit" readonly style="min-height:140px;"></textarea>
+      </div>
+      <div class="field" id="microQuestionWrap" style="display:none;">
+        <label id="microQuestionLabel" for="microQuestionSelect">Micro-question</label>
+        <select id="microQuestionSelect"></select>
+        <button id="finalizeBtn" type="button" style="margin-top:8px;">Finalize Offer</button>
+      </div>
+
     </section>
   </main>
 

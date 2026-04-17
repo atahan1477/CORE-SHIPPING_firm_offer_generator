@@ -44,13 +44,14 @@ module.exports = async (request, response) => {
       accountName: inferAccountName(senderEmail),
       preferredPol: 'Istanbul',
       preferredDestination: 'Alexandria',
-      relationshipTier: 'A'
+      relationshipTier: senderEmail.includes('vip') ? 'A' : (senderEmail.includes('new') ? 'C' : 'B')
     },
     erp: {
       preferredVessel: 'CORE TBN',
       defaultIncoterm: 'FOB',
       defaultShipmentWindow: 'Prompt / 2H May 2026',
       indicativeFreight: inferIndicativeFreight(product),
+      freightFloor: '78.00',
       currency: 'USD'
     }
   };
