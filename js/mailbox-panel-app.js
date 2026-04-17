@@ -22,6 +22,7 @@ const microQuestionLabel = document.getElementById('microQuestionLabel');
 const microQuestionSelect = document.getElementById('microQuestionSelect');
 const approvalGateInput = document.getElementById('approvalGate');
 const speedMetricInput = document.getElementById('speedMetric');
+const outlookAccessTokenInput = document.getElementById('outlookAccessToken');
 
 let pendingDecision = null;
 let pendingContext = null;
@@ -245,6 +246,32 @@ async function sendThroughOutlookHost() {
   return { sent: true, message: 'Sent via Outlook host compose API.' };
 }
 
+
+async function sendThroughOutlookGraphApi({ to, subject, body }) {
+  const accessToken = trimmed(outlookAccessTokenInput?.value || '');
+  if (!accessToken) {
+    return { sent: false, message: 'Outlook host send unavailable. Add Graph access token for API fallback.' };
+  }
+
+  const response = await fetch('/api/outlook-send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to,
+      subject,
+      body,
+      accessToken
+    })
+  });
+
+  const result = await response.json();
+  if (!response.ok || !result?.ok) {
+    return { sent: false, message: result?.error || 'Outlook Graph API send failed.' };
+  }
+
+  return { sent: true, message: 'Sent via Microsoft Graph API fallback.' };
+}
+
 async function postDispatchLog(payload) {
   const response = await fetch('/api/offer-dispatch', {
     method: 'POST',
@@ -348,15 +375,23 @@ acceptSendBtn?.addEventListener('click', async () => {
 
     await insertIntoComposeWindow(latestOfferDraft.subject, latestOfferDraft.body);
     const hostSend = await sendThroughOutlookHost();
-    if (!hostSend.sent) {
-      setStatus(hostSend.message, true);
+    const apiSend = hostSend.sent
+      ? hostSend
+      : await sendThroughOutlookGraphApi({
+        to: threadSenderInput.value,
+        subject: latestOfferDraft.subject,
+        body: latestOfferDraft.body
+      });
+
+    if (!apiSend.sent) {
+      setStatus(apiSend.message, true);
       return;
     }
 
     const sendResult = await postDispatchLog({
       mode: 'send',
       senderEmail: threadSenderInput.value,
-      channel: 'outlook-host-send',
+      channel: hostSend.sent ? 'outlook-host-send' : 'outlook-graph-send',
       rfqSnapshot: {
         threadText: threadTextInput.value,
         extracted: pendingRFQ
@@ -374,7 +409,7 @@ acceptSendBtn?.addEventListener('click', async () => {
     const durationSeconds = Math.max(1, Math.round((Date.now() - rfqOpenedAtMs) / 1000));
     saveDuration(durationSeconds);
     refreshSpeedMetric();
-    setStatus(`Offer sent via Outlook. CRM log ${sendResult.record.id} | ${durationSeconds}s RFQ-open→send.`);
+    setStatus(`Offer sent. ${apiSend.message} CRM log ${sendResult.record.id} | ${durationSeconds}s RFQ-open→send.`);
   } catch (error) {
     setStatus(error?.message || 'Send failed.', true);
   }
@@ -402,8 +437,16 @@ sendCorrectionBtn?.addEventListener('click', async () => {
     await insertIntoComposeWindow(correctionSubject, correctionBody);
 
     const hostSend = await sendThroughOutlookHost();
-    if (!hostSend.sent) {
-      setStatus(`Correction prepared. ${hostSend.message}`, true);
+    const apiSend = hostSend.sent
+      ? hostSend
+      : await sendThroughOutlookGraphApi({
+        to: threadSenderInput.value,
+        subject: correctionSubject,
+        body: correctionBody
+      });
+
+    if (!apiSend.sent) {
+      setStatus(`Correction prepared. ${apiSend.message}`, true);
       return;
     }
 
@@ -425,7 +468,7 @@ sendCorrectionBtn?.addEventListener('click', async () => {
     });
 
     lastSentRecord = correctionResult.record;
-    setStatus(`Correction sent via Outlook with linkage to prior offer ${correctionResult.record.priorOfferId}.`);
+    setStatus(`Correction sent. ${apiSend.message} Linked to prior offer ${correctionResult.record.priorOfferId}.`);
   } catch (error) {
     setStatus(error?.message || 'Send correction failed.', true);
   }
