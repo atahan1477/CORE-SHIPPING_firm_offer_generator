@@ -247,6 +247,89 @@
     .content { padding: 16px; }
 
     .form-sections { display: grid; gap: 14px; }
+    .wizard-progress {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .wizard-steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .wizard-step-pill {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 10px;
+      background: linear-gradient(180deg, #ffffff, #f6f9fc);
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .wizard-step-pill strong {
+      display: block;
+      color: var(--navy);
+      font-size: 0.9rem;
+      margin-bottom: 2px;
+    }
+
+    .wizard-step-pill.active {
+      border-color: var(--navy-2);
+      background: linear-gradient(180deg, #edf4ff, #f7fbff);
+    }
+
+    .wizard-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .wizard-track-fill {
+      height: 100%;
+      width: 33%;
+      background: linear-gradient(90deg, var(--navy-2), var(--gold));
+      transition: width 0.2s ease;
+    }
+
+    .wizard-step-content.hidden-step {
+      display: none;
+    }
+
+    .wizard-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .wizard-shortcut-note {
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .advanced-settings {
+      border: 1px dashed var(--border-strong);
+      border-radius: 14px;
+      padding: 12px;
+      background: var(--panel-soft);
+    }
+
+    .advanced-settings > summary {
+      cursor: pointer;
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
 
     .section {
       border: 1px solid var(--border);
@@ -446,6 +529,16 @@
       font-size: 0.8rem;
       font-weight: 800;
       margin-bottom: 8px;
+    }
+
+    .timer-metric {
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-weight: 800;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: linear-gradient(180deg, #ffffff, #f6f9fc);
     }
 
     button {
@@ -721,7 +814,10 @@
     body[data-theme="dark"] .preview-shell,
     body[data-theme="dark"] .preview-body,
     body[data-theme="dark"] .view-toggle,
-    body[data-theme="dark"] .theme-toggle {
+    body[data-theme="dark"] .theme-toggle,
+    body[data-theme="dark"] .wizard-step-pill,
+    body[data-theme="dark"] .timer-metric,
+    body[data-theme="dark"] .advanced-settings {
       background: linear-gradient(180deg, #162233, #131d2c);
       border-color: #31445d;
       box-shadow: none;
@@ -761,6 +857,7 @@
     body[data-theme="dark"] .mail-meta-row,
     body[data-theme="dark"] .vtab,
     body[data-theme="dark"] .theme-toggle-label,
+    body[data-theme="dark"] .wizard-shortcut-note,
     body[data-theme="dark"] .subject-bar small {
       color: #9fb2ca;
     }
@@ -837,7 +934,17 @@
         </div>
         <div class="content">
           <form id="offerForm" class="form-sections">
-            <div class="section">
+            <div class="wizard-progress">
+              <div class="wizard-steps">
+                <div class="wizard-step-pill active" data-step-pill="1"><strong>Step 1</strong>Buyer + product context</div>
+                <div class="wizard-step-pill" data-step-pill="2"><strong>Step 2</strong>Commercial essentials</div>
+                <div class="wizard-step-pill" data-step-pill="3"><strong>Step 3</strong>Preview + send/copy</div>
+              </div>
+              <div class="wizard-track"><div class="wizard-track-fill" id="wizardProgressFill"></div></div>
+            </div>
+
+            <div class="wizard-step-content" data-step-content="1">
+              <div class="section">
               <div class="section-title">
                 <h3>1. Vessel & Cargo</h3>
                 <div class="section-tag">Specs auto-load from structured rows</div>
@@ -885,6 +992,37 @@
             </div>
 
             <div class="section">
+              <div class="section-title">
+                <h3>Buyer context</h3>
+                <div class="section-tag">Contacts + message framing</div>
+              </div>
+              <div class="grid">
+                <div class="field">
+                  <label for="emailTo">To</label>
+                  <input id="emailTo" name="emailTo" placeholder="recipient@example.com" />
+                </div>
+                <div class="field">
+                  <label for="emailCc">CC</label>
+                  <input id="emailCc" name="emailCc" placeholder="cc@example.com" />
+                </div>
+                <div class="field full">
+                  <label for="emailSubject">Subject</label>
+                  <input id="emailSubject" name="emailSubject" placeholder="Auto-generated if left blank" />
+                </div>
+                <div class="field full">
+                  <label for="greeting">Greeting</label>
+                  <input id="greeting" name="greeting" value="Dear Sirs," />
+                </div>
+                <div class="field full">
+                  <label for="openingParagraph">Opening paragraph</label>
+                  <textarea id="openingParagraph" name="openingParagraph">Thank you for the cargo proposal. Please find Owners indication as follows:</textarea>
+                </div>
+              </div>
+            </div>
+            </div>
+
+            <div class="wizard-step-content hidden-step" data-step-content="2">
+              <div class="section">
               <div class="section-title">
                 <h3>2. Voyage Details</h3>
                 <div class="section-tag">Port suffix editable</div>
@@ -986,68 +1124,18 @@
                 </div>
               </div>
             </div>
-
-            <div class="section">
-              <div class="section-title">
-                <h3>4. Agents & Clauses</h3>
-                <div class="section-tag">Extra clauses supported</div>
-              </div>
-              <div class="grid">
-                <div class="field">
-                  <label for="agentLoad">Owners agents at load port</label>
-                  <select id="agentLoad" name="agentLoad"></select>
-                </div>
-                <div class="field">
-                  <label for="agentDischarge">Owners agents at discharge port</label>
-                  <select id="agentDischarge" name="agentDischarge"></select>
-                </div>
-                <div class="field">
-                  <label for="commissionPercentage">Commission percentage</label>
-                  <input id="commissionPercentage" name="commissionPercentage" value="" placeholder="e.g. 2.5 or 3,75" />
-                </div>
-                <div class="field">
-                  <label for="applicableContract">Applicable contract</label>
-                  <input id="applicableContract" name="applicableContract" value="Carriers BN" />
-                </div>
-                <div class="field full">
-                  <label for="extraClauses">Extra clause lines</label>
-                  <textarea id="extraClauses" name="extraClauses" placeholder="One clause per line. Example:
-Sub stowage
-Armed guard / security expenses to be for owners account"></textarea>
-                </div>
-                <div class="field full">
-                  <label for="finalClause">Final clause</label>
-                  <textarea id="finalClause" name="finalClause">Sub all further terms / conditions
-Indication is based on current tariffs for load/disch costs and d/as</textarea>
-                </div>
-              </div>
             </div>
 
+            <div class="wizard-step-content hidden-step" data-step-content="3">
             <div class="section">
               <div class="section-title">
-                <h3>5. Email Text</h3>
-                <div class="section-tag">Shipping-style draft</div>
+                <h3>3. Preview + send/copy</h3>
+                <div class="section-tag">Finalize in under 60 seconds</div>
               </div>
               <div class="grid">
-                <div class="field">
-                  <label for="emailTo">To</label>
-                  <input id="emailTo" name="emailTo" placeholder="recipient@example.com" />
-                </div>
-                <div class="field">
-                  <label for="emailCc">CC</label>
-                  <input id="emailCc" name="emailCc" placeholder="cc@example.com" />
-                </div>
                 <div class="field full">
-                  <label for="emailSubject">Subject</label>
-                  <input id="emailSubject" name="emailSubject" placeholder="Auto-generated if left blank" />
-                </div>
-                <div class="field full">
-                  <label for="greeting">Greeting</label>
-                  <input id="greeting" name="greeting" value="Dear Sirs," />
-                </div>
-                <div class="field full">
-                  <label for="openingParagraph">Opening paragraph</label>
-                  <textarea id="openingParagraph" name="openingParagraph">Thank you for the cargo proposal. Please find Owners indication as follows:</textarea>
+                  <div class="muted-note">Use the sticky preview panel on the right to validate output as you type.</div>
+                  <div class="muted-note">Press <strong>Enter</strong> for next/generate. Press <strong>Ctrl/Cmd + Enter</strong> to copy/send.</div>
                 </div>
                 <div class="field">
                   <label for="markerLine">Marker line</label>
@@ -1068,10 +1156,48 @@ Indication is based on current tariffs for load/disch costs and d/as</textarea>
               </div>
             </div>
 
-            <div class="section">
+            <details class="advanced-settings">
+              <summary>Advanced settings</summary>
+              <div class="section">
+                <div class="section-title">
+                  <h3>Agents & Clauses</h3>
+                  <div class="section-tag">Non-critical options</div>
+                </div>
+                <div class="grid">
+                  <div class="field">
+                    <label for="agentLoad">Owners agents at load port</label>
+                    <select id="agentLoad" name="agentLoad"></select>
+                  </div>
+                  <div class="field">
+                    <label for="agentDischarge">Owners agents at discharge port</label>
+                    <select id="agentDischarge" name="agentDischarge"></select>
+                  </div>
+                  <div class="field">
+                    <label for="commissionPercentage">Commission percentage</label>
+                    <input id="commissionPercentage" name="commissionPercentage" value="" placeholder="e.g. 2.5 or 3,75" />
+                  </div>
+                  <div class="field">
+                    <label for="applicableContract">Applicable contract</label>
+                    <input id="applicableContract" name="applicableContract" value="Carriers BN" />
+                  </div>
+                  <div class="field full">
+                    <label for="extraClauses">Extra clause lines</label>
+                    <textarea id="extraClauses" name="extraClauses" placeholder="One clause per line. Example:
+Sub stowage
+Armed guard / security expenses to be for owners account"></textarea>
+                  </div>
+                  <div class="field full">
+                    <label for="finalClause">Final clause</label>
+                    <textarea id="finalClause" name="finalClause">Sub all further terms / conditions
+Indication is based on current tariffs for load/disch costs and d/as</textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
               <div class="section-title">
-                <h3>6. Signature Block</h3>
-                <div class="section-tag">Core Shipping style</div>
+                <h3>Signature block</h3>
+                <div class="section-tag">Non-critical options</div>
               </div>
               <div class="grid">
                 <div class="field">
@@ -1112,6 +1238,14 @@ Indication is based on current tariffs for load/disch costs and d/as</textarea>
                   <input id="senderWeb" name="senderWeb" value="www.core-shipping.com" />
                 </div>
               </div>
+              </div>
+            </details>
+            </div>
+
+            <div class="wizard-actions">
+              <button type="button" class="secondary" id="wizardBackBtn">Back</button>
+              <div class="wizard-shortcut-note">Enter = next/generate · Ctrl/Cmd+Enter = copy/send</div>
+              <button type="button" class="primary" id="wizardNextBtn">Next</button>
             </div>
           </form>
         </div>
@@ -1123,7 +1257,10 @@ Indication is based on current tariffs for load/disch costs and d/as</textarea>
       <section class="panel preview-panel">
         <div class="panel-header">
           <h2>Email Preview</h2>
-          <span id="previewModeLabel">Raw text view</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span id="previewModeLabel">Raw text view</span>
+            <span class="timer-metric" id="completionTimerMetric">Completion: —</span>
+          </div>
         </div>
         <div class="content">
 

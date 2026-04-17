@@ -48,13 +48,22 @@ const vesselSpecsField = document.getElementById('vesselSpecs');
 const vesselSpecsHtmlField = document.getElementById('vesselSpecsHtml');
 const vesselSpecsPreview = document.getElementById('vesselSpecsPreview');
 const htmlPreviewFrame = document.getElementById('htmlPreviewFrame');
+const wizardBackBtn = document.getElementById('wizardBackBtn');
+const wizardNextBtn = document.getElementById('wizardNextBtn');
+const wizardProgressFill = document.getElementById('wizardProgressFill');
+const wizardStepContents = Array.from(document.querySelectorAll('[data-step-content]'));
+const wizardStepPills = Array.from(document.querySelectorAll('[data-step-pill]'));
+const completionTimerMetric = document.getElementById('completionTimerMetric');
 
 const fieldElements = Array.from(form.querySelectorAll('input[name], select[name], textarea[name]'));
 const fieldNames = fieldElements.map((element) => element.name);
 
 let currentView = 'raw';
+let currentStep = 1;
 let isApplyingExternalState = false;
 let lastSharedStateSignature = '';
+const wizardStartedAt = Date.now();
+let completionTracked = false;
 
 function currentDefaults() {
   return runtimeConfig.formDefaults || {};
@@ -349,6 +358,26 @@ function refreshPreview() {
   }
 }
 
+function updateCompletionMetric() {
+  if (!completionTimerMetric) return;
+  const seconds = Math.max(0, Math.round((Date.now() - wizardStartedAt) / 1000));
+  completionTimerMetric.textContent = `Completion: ${seconds}s`;
+}
+
+function trackCompletionMetric(action) {
+  if (completionTracked) return;
+  completionTracked = true;
+  const durationSeconds = Math.max(0, Math.round((Date.now() - wizardStartedAt) / 1000));
+  window.__coreUiAnalytics = window.__coreUiAnalytics || [];
+  window.__coreUiAnalytics.push({
+    event: 'firm_offer_wizard_completion',
+    action,
+    durationSeconds,
+    under60Seconds: durationSeconds < 60,
+    timestamp: new Date().toISOString()
+  });
+}
+
 function showStatus(message) {
   statusEl.textContent = message;
   setTimeout(() => {
@@ -415,6 +444,38 @@ function switchView(view) {
   htmlPreviewFrame.classList.toggle('hidden', !isHtml);
 
   if (isHtml) refreshHtmlPreview();
+}
+
+function setStep(step) {
+  currentStep = Math.min(3, Math.max(1, step));
+  wizardStepContents.forEach((section) => {
+    section.classList.toggle('hidden-step', Number(section.dataset.stepContent) !== currentStep);
+  });
+  wizardStepPills.forEach((pill) => {
+    pill.classList.toggle('active', Number(pill.dataset.stepPill) === currentStep);
+  });
+  wizardProgressFill.style.width = `${((currentStep - 1) / 2) * 100}%`;
+  wizardBackBtn.disabled = currentStep === 1;
+  wizardNextBtn.textContent = currentStep === 3 ? 'Generate / Stay on Preview' : 'Next';
+}
+
+function goToNextStep() {
+  if (currentStep < 3) {
+    setStep(currentStep + 1);
+    return;
+  }
+  refreshPreview();
+  showStatus('Preview regenerated.');
+}
+
+async function runCopyOrSend() {
+  if (currentView === 'html') {
+    document.getElementById('openDraftHtmlBtn').click();
+    trackCompletionMetric('send_html');
+  } else {
+    document.getElementById('copyRawBtn').click();
+    trackCompletionMetric('copy_raw');
+  }
 }
 
 function pushWholeFormToStore() {
@@ -511,6 +572,9 @@ syncStructuredVesselSpecs();
 initializeSharedState({ forceDefaults: customizationDefaultsChanged() });
 initializeTheme();
 refreshPreview();
+setStep(1);
+updateCompletionMetric();
+setInterval(updateCompletionMetric, 1000);
 
 (async () => {
   try {
@@ -574,6 +638,7 @@ document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
 document.getElementById('openDraftBtn').addEventListener('click', () => {
   const url = buildMailtoUrl(collectFormData(), { includeBody: true });
   window.location.href = url;
+  trackCompletionMetric('send_raw');
 });
 
 document.getElementById('openDraftHtmlBtn').addEventListener('click', async () => {
@@ -598,4 +663,26 @@ document.getElementById('openDraftHtmlBtn').addEventListener('click', async () =
   } else {
     showStatus('Draft opened. HTML copied as text only; rich paste may not be supported here.');
   }
+  trackCompletionMetric('send_html');
+});
+
+wizardBackBtn.addEventListener('click', () => setStep(currentStep - 1));
+wizardNextBtn.addEventListener('click', () => goToNextStep());
+
+form.addEventListener('keydown', async (event) => {
+  if (event.key !== 'Enter') return;
+  if (event.shiftKey) return;
+
+  const target = event.target;
+  const isTextarea = target instanceof HTMLTextAreaElement;
+  if (isTextarea && !event.ctrlKey && !event.metaKey) return;
+
+  event.preventDefault();
+
+  if (event.ctrlKey || event.metaKey) {
+    await runCopyOrSend();
+    return;
+  }
+
+  goToNextStep();
 });
