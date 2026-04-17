@@ -225,6 +225,26 @@ async function insertIntoComposeWindow(subject, body) {
   return 'Host compose API not detected. Draft generated in panel fields for manual review/copy.';
 }
 
+async function sendThroughOutlookHost() {
+  const item = window.Office?.context?.mailbox?.item;
+  if (!item || typeof item.sendAsync !== 'function') {
+    return { sent: false, message: 'Outlook send API not available in current host context.' };
+  }
+
+  await new Promise((resolve, reject) => {
+    item.sendAsync((result) => {
+      const succeeded = result?.status === window.Office?.AsyncResultStatus?.Succeeded || result?.status === 'succeeded';
+      if (succeeded) {
+        resolve();
+      } else {
+        reject(new Error(result?.error?.message || 'Outlook send failed.'));
+      }
+    });
+  });
+
+  return { sent: true, message: 'Sent via Outlook host compose API.' };
+}
+
 async function postDispatchLog(payload) {
   const response = await fetch('/api/offer-dispatch', {
     method: 'POST',
@@ -326,9 +346,17 @@ acceptSendBtn?.addEventListener('click', async () => {
       return;
     }
 
+    await insertIntoComposeWindow(latestOfferDraft.subject, latestOfferDraft.body);
+    const hostSend = await sendThroughOutlookHost();
+    if (!hostSend.sent) {
+      setStatus(hostSend.message, true);
+      return;
+    }
+
     const sendResult = await postDispatchLog({
       mode: 'send',
       senderEmail: threadSenderInput.value,
+      channel: 'outlook-host-send',
       rfqSnapshot: {
         threadText: threadTextInput.value,
         extracted: pendingRFQ
@@ -346,7 +374,7 @@ acceptSendBtn?.addEventListener('click', async () => {
     const durationSeconds = Math.max(1, Math.round((Date.now() - rfqOpenedAtMs) / 1000));
     saveDuration(durationSeconds);
     refreshSpeedMetric();
-    setStatus(`Offer sent. CRM log ${sendResult.record.id} | ${durationSeconds}s RFQ-open→send.`);
+    setStatus(`Offer sent via Outlook. CRM log ${sendResult.record.id} | ${durationSeconds}s RFQ-open→send.`);
   } catch (error) {
     setStatus(error?.message || 'Send failed.', true);
   }
@@ -373,6 +401,12 @@ sendCorrectionBtn?.addEventListener('click', async () => {
     draftBody.value = correctionBody;
     await insertIntoComposeWindow(correctionSubject, correctionBody);
 
+    const hostSend = await sendThroughOutlookHost();
+    if (!hostSend.sent) {
+      setStatus(`Correction prepared. ${hostSend.message}`, true);
+      return;
+    }
+
     const correctionResult = await postDispatchLog({
       mode: 'correction',
       priorOfferId: lastSentRecord.id,
@@ -391,7 +425,7 @@ sendCorrectionBtn?.addEventListener('click', async () => {
     });
 
     lastSentRecord = correctionResult.record;
-    setStatus(`Correction dispatched with linkage to prior offer ${correctionResult.record.priorOfferId}.`);
+    setStatus(`Correction sent via Outlook with linkage to prior offer ${correctionResult.record.priorOfferId}.`);
   } catch (error) {
     setStatus(error?.message || 'Send correction failed.', true);
   }
