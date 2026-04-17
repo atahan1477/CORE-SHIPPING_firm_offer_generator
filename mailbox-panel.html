@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Shipping | Mailbox Offer Assistant</title>
+  <style>
+    :root {
+      --bg: #edf2f7;
+      --panel: #ffffff;
+      --border: #d7e0eb;
+      --text: #17314e;
+      --muted: #667b93;
+      --navy: #16355d;
+      --navy2: #244873;
+      --ok: #166a52;
+      --warn: #b06a00;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #edf2f7 0%, #e4edf6 100%);
+    }
+    .layout {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: minmax(320px, 36%) minmax(0, 64%);
+      gap: 14px;
+    }
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 10px 20px rgba(16, 40, 70, 0.08);
+    }
+    h1 { margin: 0 0 8px; font-size: 1.6rem; }
+    h2 { margin: 0 0 10px; font-size: 1rem; }
+    .muted { color: var(--muted); font-size: 0.92rem; }
+    .field { display: grid; gap: 6px; margin-bottom: 12px; }
+    textarea, input, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      font: inherit;
+      color: inherit;
+      background: #fff;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(180deg, var(--navy2), var(--navy));
+    }
+    .secondary-btn {
+      background: #fff;
+      color: var(--navy);
+      border: 1px solid var(--border);
+    }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .status { min-height: 22px; font-size: 0.9rem; color: var(--ok); margin-top: 8px; }
+    .status.warn { color: var(--warn); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+    .chip {
+      background: rgba(22,53,93,0.06);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <section class="panel">
+      <h1>Mailbox Offer Assistant</h1>
+      <p class="muted">Primary UX entry point for RFQ-to-offer generation inside mailbox workflows. Use the add-in action button below and keep standalone generator as fallback.</p>
+      <div class="chips">
+        <span class="chip">Gmail / Outlook Add-in Pattern</span>
+        <span class="chip">Action: Generate Firm Offer</span>
+        <span class="chip">Fallback: Standalone Generator</span>
+      </div>
+
+      <h2>Current Email Thread</h2>
+      <div class="field">
+        <label for="threadSender">Counterparty email</label>
+        <input id="threadSender" type="email" placeholder="chartering@customer.com" />
+      </div>
+      <div class="field">
+        <label for="threadText">Thread text</label>
+        <textarea id="threadText" placeholder="Paste current email thread or allow host API read."></textarea>
+      </div>
+      <div class="actions">
+        <button id="generateBtn" type="button">Generate Firm Offer</button>
+        <a class="secondary-btn" href="./firm-generator.html" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:999px;">Open Standalone Fallback</a>
+      </div>
+      <p id="status" class="status"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Compose Window Draft</h2>
+      <p class="muted">When hosted in Gmail/Outlook add-ins, subject/body are inserted directly into the active compose item.</p>
+      <div class="grid">
+        <div class="field">
+          <label for="draftSubject">Subject</label>
+          <input id="draftSubject" />
+        </div>
+        <div class="field">
+          <label for="draftTerms">Commercial terms summary</label>
+          <input id="draftTerms" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="draftBody">Body</label>
+        <textarea id="draftBody" style="min-height:380px;"></textarea>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./js/mailbox-panel-app.js"></script>
+</body>
+</html>

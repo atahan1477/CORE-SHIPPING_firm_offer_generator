@@ -372,21 +372,22 @@
         </div>
       </div>
       <h1>Core Shipping Tools</h1>
-      <p>Select a tool to continue. The first button opens your main Firm Offer Generator. The second button is labeled as requested and opens your Brevo JSON Feed Maker so non-technical users can prepare the feed file without editing raw JSON manually.</p>
+      <p>Select a tool to continue. The primary entry point is now the mailbox-side panel add-in flow (Gmail / Outlook) with direct RFQ-to-offer drafting. The standalone Firm Offer Generator remains available as fallback for edge cases.</p>
     </section>
 
     <section class="tools">
       <article class="tool-card">
         <div>
           <span class="eyebrow">Primary Tool</span>
-          <h2>Firm Offer Generator</h2>
-          <p>Open the main firm offer generation tool with the full existing workflow, live preview, copy actions, shared state integration, and email output builder.</p>
+          <h2>Mailbox Offer Assistant</h2>
+          <p>Open the mailbox-side panel workflow. Use the "Generate Firm Offer" action to parse the active thread, enrich from CRM/ERP context, and draft the full reply directly in compose.</p>
         </div>
         <div class="actions">
-          <span class="meta">Main production tool</span>
+          <span class="meta">Primary UX entry point</span>
           <div class="actions-group">
             <a class="tool-button ghost" href="./customize.html">Customize</a>
-            <a class="tool-button" href="./firm-generator.html">Firm Offer Generator</a>
+            <a class="tool-button ghost" href="./firm-generator.html">Fallback Generator</a>
+            <a class="tool-button" href="./mailbox-panel.html">Mailbox Offer Assistant</a>
           </div>
         </div>
       </article>
@@ -405,7 +406,7 @@
     </section>
 
     <div class="footer-note">
-      Both pages use the same domain structure, so this setup stays fully compatible with your current GitHub to Vercel deployment workflow.
+      All tools remain on the same domain structure, keeping compatibility with the current GitHub-to-Vercel deployment workflow while promoting the mailbox-side panel as the default path.
     </div>
   </main>
 
