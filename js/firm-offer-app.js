@@ -19,6 +19,8 @@ const LEGACY_THEME_STORAGE_KEY = 'firmOfferGeneratorTheme';
 const LEGACY_APPLICABLE_CONTRACT_TEXT = 'Clean Gencon 94 to apply';
 const UPDATED_APPLICABLE_CONTRACT_TEXT = 'Carriers BN';
 const CUSTOMIZATION_SIGNATURE_KEY = 'coreShippingCustomizationSignatureV1';
+const OFFER_HISTORY_STORAGE_KEY = 'coreShippingOfferHistoryV1';
+const OFFER_HISTORY_LIMIT = 60;
 
 let runtimeConfig = getRuntimeConfig();
 
@@ -48,6 +50,13 @@ const vesselSpecsField = document.getElementById('vesselSpecs');
 const vesselSpecsHtmlField = document.getElementById('vesselSpecsHtml');
 const vesselSpecsPreview = document.getElementById('vesselSpecsPreview');
 const htmlPreviewFrame = document.getElementById('htmlPreviewFrame');
+const newOfferBtn = document.getElementById('newOfferBtn');
+const cloneLastOfferBtn = document.getElementById('cloneLastOfferBtn');
+const saveApprovedBtn = document.getElementById('saveApprovedBtn');
+const sameProductGroupOnlyInput = document.getElementById('sameProductGroupOnly');
+const cloneDiffPanel = document.getElementById('cloneDiffPanel');
+const cloneDiffList = document.getElementById('cloneDiffList');
+const generateAfterReviewBtn = document.getElementById('generateAfterReviewBtn');
 
 const fieldElements = Array.from(form.querySelectorAll('input[name], select[name], textarea[name]'));
 const fieldNames = fieldElements.map((element) => element.name);
@@ -55,6 +64,7 @@ const fieldNames = fieldElements.map((element) => element.name);
 let currentView = 'raw';
 let isApplyingExternalState = false;
 let lastSharedStateSignature = '';
+let lastCloneReviewState = null;
 
 function currentDefaults() {
   return runtimeConfig.formDefaults || {};
@@ -356,6 +366,124 @@ function showStatus(message) {
   }, 2600);
 }
 
+function readOfferHistory() {
+  try {
+    const raw = localStorage.getItem(OFFER_HISTORY_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function writeOfferHistory(entries) {
+  try {
+    localStorage.setItem(OFFER_HISTORY_STORAGE_KEY, JSON.stringify(entries.slice(0, OFFER_HISTORY_LIMIT)));
+  } catch (_) {
+    // Ignore storage failures.
+  }
+}
+
+function normalizedToken(value) {
+  return trimmed(value).toLowerCase();
+}
+
+function recordOfferSnapshot(status) {
+  const snapshot = collectFormData();
+  const entry = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    savedAt: new Date().toISOString(),
+    status,
+    customer: normalizedToken(snapshot.account),
+    productGroup: normalizedToken(snapshot.productGroup || snapshot.cargo),
+    snapshot
+  };
+
+  const history = readOfferHistory();
+  history.unshift(entry);
+  writeOfferHistory(history);
+}
+
+function findLatestRelevantOffer({ customer, productGroup, sameProductGroupOnly }) {
+  const history = readOfferHistory();
+  if (!customer) return null;
+
+  return history.find((entry) => {
+    if (!entry || !['sent', 'approved'].includes(entry.status)) return false;
+    if (normalizedToken(entry.customer) !== customer) return false;
+    if (!sameProductGroupOnly) return true;
+    if (!productGroup) return false;
+    return normalizedToken(entry.productGroup) === productGroup;
+  }) || null;
+}
+
+function formatDisplayDate(value) {
+  return value.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).replace(',', '');
+}
+
+function updateShipmentPlaceholders(snapshot) {
+  const next = { ...snapshot };
+  const now = new Date();
+  const validity = new Date(now);
+  validity.setDate(validity.getDate() + 7);
+
+  next.offerDate = formatDisplayDate(now);
+  next.validityDeadline = formatDisplayDate(validity);
+
+  const currentYear = String(now.getFullYear());
+  if (trimmed(next.laycanDate)) {
+    next.laycanDate = String(next.laycanDate).replace(/\b(19|20)\d{2}\b/g, currentYear);
+  }
+
+  ['openingParagraph', 'emailSubject', 'finalClause'].forEach((fieldName) => {
+    if (!trimmed(next[fieldName])) return;
+    next[fieldName] = String(next[fieldName])
+      .replace(/\{\{\s*SHIPMENT_WINDOW\s*\}\}/gi, trimmed(next.laycanDate))
+      .replace(/\[\s*SHIPMENT_WINDOW\s*\]/gi, trimmed(next.laycanDate));
+  });
+
+  return next;
+}
+
+function clearRequiredFieldHighlights() {
+  ['freightAmount', 'cargoQuantity', 'laycanDate'].forEach((name) => {
+    const element = getFieldElement(name);
+    const field = element?.closest('.field');
+    if (field) field.classList.remove('diff-highlight');
+  });
+}
+
+function showCloneDiffHighlights(changes) {
+  if (!cloneDiffPanel || !cloneDiffList) return;
+  clearRequiredFieldHighlights();
+
+  if (!changes.length) {
+    cloneDiffPanel.classList.add('hidden');
+    cloneDiffList.innerHTML = '';
+    lastCloneReviewState = null;
+    return;
+  }
+
+  cloneDiffList.innerHTML = '';
+  changes.forEach((change) => {
+    const element = getFieldElement(change.field);
+    const field = element?.closest('.field');
+    if (field) field.classList.add('diff-highlight');
+
+    const item = document.createElement('li');
+    item.textContent = `${change.label}: "${change.before || '—'}" → "${change.after || '—'}"`;
+    cloneDiffList.appendChild(item);
+  });
+
+  cloneDiffPanel.classList.remove('hidden');
+  lastCloneReviewState = { at: Date.now(), changes };
+}
+
 function refreshThemeSensitiveUI() {
   refreshPreview();
 
@@ -502,6 +630,11 @@ function handleAnyInput(event) {
 
   pushWholeFormToStore();
   refreshPreview();
+
+  if (event?.target?.name && ['freightAmount', 'cargoQuantity', 'laycanDate'].includes(event.target.name)) {
+    const field = event.target.closest('.field');
+    if (field) field.classList.remove('diff-highlight');
+  }
 }
 
 runtimeConfig = getRuntimeConfig();
@@ -571,9 +704,81 @@ document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
   }
 });
 
+if (newOfferBtn) {
+  newOfferBtn.addEventListener('click', () => {
+    initializeSelects();
+    applyTextDefaults();
+    const refreshed = updateShipmentPlaceholders(collectFormData());
+    applySnapshotToForm(refreshed);
+    pushWholeFormToStore();
+    refreshPreview();
+    clearRequiredFieldHighlights();
+    if (cloneDiffPanel) cloneDiffPanel.classList.add('hidden');
+    showStatus('Started a new offer with fresh date defaults.');
+  });
+}
+
+if (cloneLastOfferBtn) {
+  cloneLastOfferBtn.addEventListener('click', () => {
+    const current = collectFormData();
+    const customer = normalizedToken(current.account);
+    const productGroup = normalizedToken(current.productGroup || current.cargo);
+    const match = findLatestRelevantOffer({
+      customer,
+      productGroup,
+      sameProductGroupOnly: Boolean(sameProductGroupOnlyInput?.checked)
+    });
+
+    if (!match?.snapshot) {
+      showStatus('No sent/approved offer found for this customer (and product group filter).');
+      return;
+    }
+
+    const beforeAutoUpdate = { ...match.snapshot };
+    const cloned = updateShipmentPlaceholders(beforeAutoUpdate);
+    applySnapshotToForm(cloned);
+    pushWholeFormToStore();
+    refreshPreview();
+
+    const requiredChanges = [
+      { field: 'freightAmount', label: 'Price' },
+      { field: 'cargoQuantity', label: 'Qty' },
+      { field: 'laycanDate', label: 'Date' }
+    ].map((item) => ({
+      ...item,
+      before: trimmed(beforeAutoUpdate[item.field]),
+      after: trimmed(cloned[item.field])
+    })).filter((item) => item.before !== item.after);
+
+    showCloneDiffHighlights(requiredChanges);
+    showStatus('Last offer cloned. Review highlighted required fields, then generate email.');
+  });
+}
+
+if (saveApprovedBtn) {
+  saveApprovedBtn.addEventListener('click', () => {
+    recordOfferSnapshot('approved');
+    showStatus('Current offer saved as approved snapshot.');
+  });
+}
+
+if (generateAfterReviewBtn) {
+  generateAfterReviewBtn.addEventListener('click', () => {
+    if (!lastCloneReviewState) {
+      showStatus('No clone review found. Clone an offer first.');
+      return;
+    }
+    const url = buildMailtoUrl(collectFormData(), { includeBody: true });
+    window.location.href = url;
+    recordOfferSnapshot('sent');
+    showStatus('Draft opened from reviewed clone. Snapshot recorded as sent.');
+  });
+}
+
 document.getElementById('openDraftBtn').addEventListener('click', () => {
   const url = buildMailtoUrl(collectFormData(), { includeBody: true });
   window.location.href = url;
+  recordOfferSnapshot('sent');
 });
 
 document.getElementById('openDraftHtmlBtn').addEventListener('click', async () => {
@@ -590,6 +795,7 @@ document.getElementById('openDraftHtmlBtn').addEventListener('click', async () =
 
   const url = buildMailtoUrl(formData, { includeBody: false });
   window.location.href = url;
+  recordOfferSnapshot('sent');
 
   if (copiedRichHtml) {
     showStatus('Draft opened. HTML is copied as rich content and ready to paste.');

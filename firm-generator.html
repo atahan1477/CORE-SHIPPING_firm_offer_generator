@@ -625,6 +625,50 @@
       font-size: 0.84rem;
     }
 
+    .workspace-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .toggle-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel-soft);
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .field.diff-highlight input,
+    .field.diff-highlight textarea,
+    .field.diff-highlight select {
+      border-color: #caa25d;
+      box-shadow: 0 0 0 2px rgba(202, 162, 93, 0.22);
+      background: #fffaf1;
+    }
+
+    .clone-diff-panel {
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-soft);
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .clone-diff-panel ul {
+      margin: 8px 0 10px 16px;
+      padding: 0;
+    }
+
     .html-preview-frame {
       width: 100%;
       height: 100%;
@@ -836,6 +880,15 @@
           <span>Commercial terms, specs block, and email settings</span>
         </div>
         <div class="content">
+          <div class="workspace-actions">
+            <button type="button" class="secondary" id="newOfferBtn">New Offer</button>
+            <button type="button" class="primary" id="cloneLastOfferBtn">Clone Last Offer</button>
+            <button type="button" class="secondary" id="saveApprovedBtn">Mark Approved Snapshot</button>
+            <label class="toggle-inline" for="sameProductGroupOnly">
+              <input type="checkbox" id="sameProductGroupOnly" checked />
+              Same product group only
+            </label>
+          </div>
           <form id="offerForm" class="form-sections">
             <div class="section">
               <div class="section-title">
@@ -854,6 +907,14 @@
                 <div class="field full">
                   <label for="cargo">Cargo</label>
                   <input id="cargo" name="cargo" value="As per given details" placeholder="Enter cargo details" />
+                </div>
+                <div class="field">
+                  <label for="cargoQuantity">Qty</label>
+                  <input id="cargoQuantity" name="cargoQuantity" placeholder="e.g. 2,500 mts" />
+                </div>
+                <div class="field">
+                  <label for="productGroup">Product group</label>
+                  <input id="productGroup" name="productGroup" placeholder="Optional clone filter" />
                 </div>
                 <div class="field">
                   <label for="underDeck">Under deck wording</label>
@@ -893,6 +954,14 @@
                 <div class="field">
                   <label for="laycanDate">Lay/can</label>
                   <input id="laycanDate" name="laycanDate" value="01-10 Sep 2024" />
+                </div>
+                <div class="field">
+                  <label for="offerDate">Offer date</label>
+                  <input id="offerDate" name="offerDate" placeholder="Auto-updated on clone" />
+                </div>
+                <div class="field">
+                  <label for="validityDeadline">Validity deadline</label>
+                  <input id="validityDeadline" name="validityDeadline" placeholder="Auto-updated on clone" />
                 </div>
                 <div class="field">
                   <label for="terms">Terms</label>
@@ -1142,6 +1211,12 @@ Indication is based on current tariffs for load/disch costs and d/as</textarea>
               <button type="button" class="primary" id="copyHtmlBtn">Copy HTML Mail</button>
               <button type="button" class="accent" id="openDraftHtmlBtn">Open Draft · Paste Ready</button>
             </div>
+          </div>
+
+          <div class="clone-diff-panel hidden" id="cloneDiffPanel">
+            <strong>Review changed required fields</strong>
+            <ul id="cloneDiffList"></ul>
+            <button type="button" class="accent" id="generateAfterReviewBtn">Generate Email After Review</button>
           </div>
 
           <div class="status" id="status"></div>
