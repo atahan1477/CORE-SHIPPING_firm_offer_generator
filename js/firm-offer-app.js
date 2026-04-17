@@ -1,10 +1,12 @@
-import { getRuntimeConfig, subscribeToRuntimeCustomization, syncRuntimeCustomizationFromServer } from '../shared/config.js';
+import { getRuntimeConfig, saveRuntimeCustomization, subscribeToRuntimeCustomization, syncRuntimeCustomizationFromServer } from '../shared/config.js';
 import {
+  CONTENT_BLOCK_CATEGORIES,
   buildEmailText,
   buildHtmlEmailDocument,
   buildMailtoUrl,
   buildVesselSpecsBlocks,
   getTermBehavior,
+  resolveContentBlocks,
   trimmed
 } from '../shared/offer-logic.js';
 import {
@@ -48,6 +50,7 @@ const vesselSpecsField = document.getElementById('vesselSpecs');
 const vesselSpecsHtmlField = document.getElementById('vesselSpecsHtml');
 const vesselSpecsPreview = document.getElementById('vesselSpecsPreview');
 const htmlPreviewFrame = document.getElementById('htmlPreviewFrame');
+const contentBlocksPanel = document.getElementById('contentBlocksPanel');
 
 const fieldElements = Array.from(form.querySelectorAll('input[name], select[name], textarea[name]'));
 const fieldNames = fieldElements.map((element) => element.name);
@@ -55,6 +58,18 @@ const fieldNames = fieldElements.map((element) => element.name);
 let currentView = 'raw';
 let isApplyingExternalState = false;
 let lastSharedStateSignature = '';
+let blockSelectionOverrides = {};
+let blockDraftEdits = {};
+
+const BLOCK_LABELS = {
+  intro: 'Intro',
+  product_spec: 'Product spec',
+  pricing: 'Pricing',
+  delivery_terms: 'Delivery terms',
+  payment_terms: 'Payment terms',
+  validity: 'Validity',
+  closing: 'Closing'
+};
 
 function currentDefaults() {
   return runtimeConfig.formDefaults || {};
@@ -89,6 +104,7 @@ function initializeSelects(preferredValues = {}) {
   fillSelect('dischargingTerms', runtimeConfig.laytimeTermsOptions, preferredValues.dischargingTerms || defaults.dischargingTerms);
   fillSelect('agentLoad', runtimeConfig.agentOptions, preferredValues.agentLoad || defaults.agentLoad);
   fillSelect('agentDischarge', runtimeConfig.agentOptions, preferredValues.agentDischarge || defaults.agentDischarge);
+  fillSelect('customerTier', runtimeConfig.customerTierOptions, preferredValues.customerTier || defaults.customerTier);
 }
 
 function applyTextDefaults(preferredValues = {}) {
@@ -232,7 +248,11 @@ function updateConditionalUI() {
 }
 
 function buildHtmlPreviewDocument() {
-  const html = buildHtmlEmailDocument(collectFormData());
+  const html = buildHtmlEmailDocument(collectFormData(), {
+    runtimeConfig,
+    contentBlockSelections: blockSelectionOverrides,
+    contentBlockDrafts: blockDraftEdits
+  });
   const isDarkTheme = document.body.getAttribute('data-theme') === 'dark';
   const previewCanvas = isDarkTheme ? '#101926' : '#eef3f7';
   const previewText = isDarkTheme ? '#dbe6f3' : '#17314f';
@@ -337,12 +357,17 @@ function refreshPreview() {
   syncStructuredVesselSpecs();
 
   const data = collectFormData();
-  const emailText = buildEmailText(data);
+  const emailText = buildEmailText(data, {
+    runtimeConfig,
+    contentBlockSelections: blockSelectionOverrides,
+    contentBlockDrafts: blockDraftEdits
+  });
 
   subjectPreview.textContent = emailText.subject;
   toPreview.textContent = trimmed(data.emailTo) || '—';
   ccPreview.textContent = trimmed(data.emailCc) || '—';
   emailPreview.textContent = emailText.body;
+  renderContentBlocksEditor(data);
 
   if (!htmlPreviewFrame.classList.contains('hidden')) {
     refreshHtmlPreview();
@@ -486,6 +511,8 @@ function reinitializeForCustomizationChange() {
   initializeSelects(currentData);
   applyTextDefaults(currentData);
   syncStructuredVesselSpecs();
+  blockSelectionOverrides = {};
+  blockDraftEdits = {};
   pushWholeFormToStore();
   refreshPreview();
 }
@@ -495,13 +522,126 @@ function handleAnyInput(event) {
 
   const target = event.target;
   if (!target || !('name' in target)) return;
+  if (target.dataset?.contentBlockEditor === 'true') return;
 
   if (target.id === 'vessel') {
     syncStructuredVesselSpecs();
   }
 
+  if (
+    target.id === 'blockRegion'
+    || target.id === 'blockProductFamily'
+    || target.id === 'customerTier'
+    || target.id === 'terms'
+    || target.id === 'currency'
+  ) {
+    blockSelectionOverrides = {};
+  }
+
   pushWholeFormToStore();
   refreshPreview();
+}
+
+function renderContentBlocksEditor(formData) {
+  if (!contentBlocksPanel) return;
+
+  const resolved = resolveContentBlocks(formData, runtimeConfig, blockSelectionOverrides);
+  contentBlocksPanel.className = 'content-blocks-panel';
+  contentBlocksPanel.innerHTML = '';
+
+  CONTENT_BLOCK_CATEGORIES.forEach((category) => {
+    const selected = resolved?.[category]?.selected || null;
+    const alternatives = resolved?.[category]?.alternatives || [];
+    const card = document.createElement('div');
+    card.className = 'content-block-card';
+
+    const head = document.createElement('div');
+    head.className = 'content-block-head';
+    head.innerHTML = `<span>${BLOCK_LABELS[category] || category}</span><span>${alternatives.length} alternative(s)</span>`;
+
+    const textArea = document.createElement('textarea');
+    textArea.dataset.contentBlockEditor = 'true';
+    textArea.value = blockDraftEdits[category] ?? (selected?.text || '');
+    textArea.placeholder = 'No matching block available.';
+    textArea.addEventListener('input', () => {
+      blockDraftEdits[category] = textArea.value;
+    });
+    textArea.addEventListener('change', () => refreshPreview());
+
+    const actionRow = document.createElement('div');
+    actionRow.className = 'content-block-actions';
+
+    const swapButton = document.createElement('button');
+    swapButton.type = 'button';
+    swapButton.className = 'secondary';
+    swapButton.textContent = 'Alternative wording';
+    swapButton.disabled = alternatives.length === 0;
+    swapButton.addEventListener('click', () => {
+      if (!alternatives.length) return;
+      const next = alternatives[0];
+      if (next?.id) {
+        blockSelectionOverrides[category] = next.id;
+        delete blockDraftEdits[category];
+        refreshPreview();
+      }
+    });
+
+    const approveButton = document.createElement('button');
+    approveButton.type = 'button';
+    approveButton.className = 'primary';
+    approveButton.textContent = 'Approve as variant';
+    approveButton.addEventListener('click', () => approveBlockVariant(category, textArea.value, selected));
+
+    actionRow.appendChild(swapButton);
+    actionRow.appendChild(approveButton);
+    card.appendChild(head);
+    card.appendChild(textArea);
+    card.appendChild(actionRow);
+    contentBlocksPanel.appendChild(card);
+  });
+}
+
+function approveBlockVariant(category, rawText, selectedVariant) {
+  const text = trimmed(rawText);
+  if (!text) {
+    showStatus('Cannot save empty block text.');
+    return;
+  }
+
+  const snapshot = getRuntimeConfig();
+  const next = JSON.parse(JSON.stringify(snapshot));
+  if (!next.contentBlocks || typeof next.contentBlocks !== 'object') {
+    next.contentBlocks = {};
+  }
+  if (!Array.isArray(next.contentBlocks[category])) {
+    next.contentBlocks[category] = [];
+  }
+
+  const exists = next.contentBlocks[category].some((variant) => trimmed(variant?.text) === text);
+  if (exists) {
+    showStatus('This wording already exists in block variants.');
+    return;
+  }
+
+  const now = Date.now();
+  const id = `${category}_${now.toString(36)}`;
+  const tags = selectedVariant?.tags && typeof selectedVariant.tags === 'object'
+    ? { ...selectedVariant.tags }
+    : {
+      region: trimmed(form.elements.namedItem('blockRegion')?.value || 'global').toLowerCase(),
+      productFamily: trimmed(form.elements.namedItem('blockProductFamily')?.value || 'all').toLowerCase(),
+      incoterm: trimmed(form.elements.namedItem('terms')?.value || 'all').toLowerCase(),
+      currency: trimmed(form.elements.namedItem('currency')?.value || 'all').toLowerCase(),
+      customerTier: trimmed(form.elements.namedItem('customerTier')?.value || 'standard').toLowerCase()
+    };
+
+  next.contentBlocks[category].push({ id, text, tags });
+  saveRuntimeCustomization(next, { source: APP_SOURCE });
+  blockSelectionOverrides[category] = id;
+  delete blockDraftEdits[category];
+  runtimeConfig = getRuntimeConfig();
+  refreshPreview();
+  showStatus(`Saved "${BLOCK_LABELS[category] || category}" variant.`);
 }
 
 runtimeConfig = getRuntimeConfig();
@@ -543,7 +683,11 @@ document.getElementById('tabHtml').addEventListener('click', () => switchView('h
 
 document.getElementById('copyRawBtn').addEventListener('click', async () => {
   try {
-    const emailText = buildEmailText(collectFormData());
+    const emailText = buildEmailText(collectFormData(), {
+      runtimeConfig,
+      contentBlockSelections: blockSelectionOverrides,
+      contentBlockDrafts: blockDraftEdits
+    });
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(emailText.body);
       showStatus('Raw mail copied to clipboard.');
@@ -557,7 +701,11 @@ document.getElementById('copyRawBtn').addEventListener('click', async () => {
 
 document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
   try {
-    const html = buildHtmlEmailDocument(collectFormData());
+    const html = buildHtmlEmailDocument(collectFormData(), {
+      runtimeConfig,
+      contentBlockSelections: blockSelectionOverrides,
+      contentBlockDrafts: blockDraftEdits
+    });
     const copiedRichHtml = await copyHtmlForRichPaste(html);
     if (copiedRichHtml) {
       showStatus('HTML mail copied as rich content (paste-ready).');
@@ -572,13 +720,22 @@ document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('openDraftBtn').addEventListener('click', () => {
-  const url = buildMailtoUrl(collectFormData(), { includeBody: true });
+  const url = buildMailtoUrl(collectFormData(), {
+    includeBody: true,
+    runtimeConfig,
+    contentBlockSelections: blockSelectionOverrides,
+    contentBlockDrafts: blockDraftEdits
+  });
   window.location.href = url;
 });
 
 document.getElementById('openDraftHtmlBtn').addEventListener('click', async () => {
   const formData = collectFormData();
-  const html = buildHtmlEmailDocument(formData);
+  const html = buildHtmlEmailDocument(formData, {
+    runtimeConfig,
+    contentBlockSelections: blockSelectionOverrides,
+    contentBlockDrafts: blockDraftEdits
+  });
   let copiedRichHtml = false;
   let copyFailed = false;
 
@@ -588,7 +745,12 @@ document.getElementById('openDraftHtmlBtn').addEventListener('click', async () =
     copyFailed = true;
   }
 
-  const url = buildMailtoUrl(formData, { includeBody: false });
+  const url = buildMailtoUrl(formData, {
+    includeBody: false,
+    runtimeConfig,
+    contentBlockSelections: blockSelectionOverrides,
+    contentBlockDrafts: blockDraftEdits
+  });
   window.location.href = url;
 
   if (copiedRichHtml) {

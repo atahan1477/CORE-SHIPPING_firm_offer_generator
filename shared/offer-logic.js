@@ -1,4 +1,5 @@
 import { getRuntimeTermBehavior } from './config.js';
+export const CONTENT_BLOCK_CATEGORIES = ['intro', 'product_spec', 'pricing', 'delivery_terms', 'payment_terms', 'validity', 'closing'];
 
 export function trimmed(value) {
   return (value || '').trim();
@@ -271,6 +272,79 @@ export function clauseLinesFromText(value) {
     .filter(Boolean);
 }
 
+function normalizeTagValue(value, fallback = 'all') {
+  const next = trimmed(value).toLowerCase();
+  return next || fallback;
+}
+
+function buildBlockContext(data) {
+  return {
+    region: normalizeTagValue(data.blockRegion, 'global'),
+    productFamily: normalizeTagValue(data.blockProductFamily, 'all'),
+    incoterm: normalizeTagValue(data.terms, 'all'),
+    currency: normalizeTagValue(data.currency, 'all'),
+    customerTier: normalizeTagValue(data.customerTier, 'standard')
+  };
+}
+
+function scoreTagValue(variantValue, contextValue, wildcardFallback = 'all') {
+  const candidate = normalizeTagValue(variantValue, wildcardFallback);
+  if (candidate === contextValue) return 6;
+  if (candidate === wildcardFallback || candidate === 'global') return 2;
+  return 0;
+}
+
+function scoreVariant(variant, context) {
+  const tags = variant?.tags && typeof variant.tags === 'object' ? variant.tags : {};
+  return (
+    scoreTagValue(tags.region, context.region, 'global')
+    + scoreTagValue(tags.productFamily, context.productFamily)
+    + scoreTagValue(tags.incoterm, context.incoterm)
+    + scoreTagValue(tags.currency, context.currency)
+    + scoreTagValue(tags.customerTier, context.customerTier)
+  );
+}
+
+function sortVariantsByMatch(variants, context) {
+  return variants
+    .map((variant, index) => ({ variant, index, score: scoreVariant(variant, context) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+}
+
+export function resolveContentBlocks(data, runtimeConfig = {}, selectionOverrides = {}) {
+  const allBlocks = runtimeConfig?.contentBlocks && typeof runtimeConfig.contentBlocks === 'object'
+    ? runtimeConfig.contentBlocks
+    : {};
+
+  const context = buildBlockContext(data);
+  const resolved = {};
+
+  CONTENT_BLOCK_CATEGORIES.forEach((category) => {
+    const variants = Array.isArray(allBlocks[category]) ? allBlocks[category] : [];
+    if (!variants.length) {
+      resolved[category] = { selected: null, alternatives: [], context };
+      return;
+    }
+
+    const sorted = sortVariantsByMatch(variants, context);
+    const requestedId = trimmed(selectionOverrides?.[category] || '');
+    const requestedItem = requestedId
+      ? sorted.find((entry) => trimmed(entry.variant?.id) === requestedId)
+      : null;
+    const selectedEntry = requestedItem || sorted[0];
+
+    resolved[category] = {
+      selected: selectedEntry?.variant || null,
+      alternatives: sorted
+        .map((entry) => entry.variant)
+        .filter((variant) => trimmed(variant?.id) !== trimmed(selectedEntry?.variant?.id)),
+      context
+    };
+  });
+
+  return resolved;
+}
+
 export function getTermBehavior(term) {
   const termBehavior = getRuntimeTermBehavior();
   return termBehavior[trimmed(term)] || {
@@ -385,15 +459,23 @@ export function buildOfferText(data) {
     .join('\n');
 }
 
-export function buildEmailText(data) {
+export function buildEmailText(data, options = {}) {
+  const { runtimeConfig = {}, contentBlockSelections = {}, contentBlockDrafts = {} } = options;
   const subject = trimmed(data.emailSubject) || autoSubject(data);
   const offerText = buildOfferText(data);
   const vesselSpecs = data.includeVesselSpecs ? trimmed(data.vesselSpecs) : '';
+  const resolvedBlocks = resolveContentBlocks(data, runtimeConfig, contentBlockSelections);
+  const introText = trimmed(contentBlockDrafts.intro) || trimmed(resolvedBlocks.intro?.selected?.text) || trimmed(data.openingParagraph);
+  const closingText = trimmed(contentBlockDrafts.closing) || trimmed(resolvedBlocks.closing?.selected?.text) || trimmed(data.closingParagraph);
+  const modularLines = CONTENT_BLOCK_CATEGORIES
+    .filter((category) => category !== 'intro' && category !== 'closing')
+    .map((category) => trimmed(contentBlockDrafts[category]) || trimmed(resolvedBlocks[category]?.selected?.text))
+    .filter(Boolean);
 
   const blocks = [
     trimmed(data.greeting),
     '',
-    trimmed(data.openingParagraph),
+    introText,
     '',
     trimmed(data.markerLine),
     vesselSpecs ? '' : '',
@@ -401,11 +483,13 @@ export function buildEmailText(data) {
     vesselSpecs ? '' : '',
     trimmed(data.forLine),
     '',
+    ...modularLines,
+    modularLines.length ? '' : '',
     offerText,
     '',
     trimmed(data.endOfferLine),
     '',
-    trimmed(data.closingParagraph),
+    closingText,
     '',
     buildSignature(data)
   ];
@@ -417,7 +501,8 @@ export function buildEmailText(data) {
 
   return {
     subject,
-    body: cleaned.join('\n')
+    body: cleaned.join('\n'),
+    selectedContentBlocks: resolvedBlocks
   };
 }
 
@@ -469,6 +554,9 @@ export function buildComputedOffer(data) {
     openingParagraph: trimmed(data.openingParagraph),
     endOfferLine: trimmed(data.endOfferLine),
     closingParagraph: trimmed(data.closingParagraph),
+    contentBlockRegion: trimmed(data.blockRegion),
+    contentBlockProductFamily: trimmed(data.blockProductFamily),
+    contentBlockCustomerTier: trimmed(data.customerTier),
     signature: buildSignature(data)
   };
 }
@@ -553,9 +641,17 @@ export function buildTermsRowsHtml(details) {
     .join('');
 }
 
-export function buildHtmlEmailDocument(data) {
+export function buildHtmlEmailDocument(data, options = {}) {
+  const { runtimeConfig = {}, contentBlockSelections = {}, contentBlockDrafts = {} } = options;
   const details = buildComputedOffer(data);
+  const resolvedBlocks = resolveContentBlocks(data, runtimeConfig, contentBlockSelections);
   const vesselSpecs = parseVesselSpecs(details.vesselSpecsHtml || details.vesselSpecs);
+  const introText = trimmed(contentBlockDrafts.intro) || trimmed(resolvedBlocks.intro?.selected?.text) || details.openingParagraph;
+  const closingText = trimmed(contentBlockDrafts.closing) || trimmed(resolvedBlocks.closing?.selected?.text) || details.closingParagraph;
+  const modularLines = CONTENT_BLOCK_CATEGORIES
+    .filter((category) => category !== 'intro' && category !== 'closing')
+    .map((category) => trimmed(contentBlockDrafts[category]) || trimmed(resolvedBlocks[category]?.selected?.text))
+    .filter(Boolean);
 
   const vesselSpecsSection = vesselSpecs.lines.length
     ? `
@@ -633,7 +729,7 @@ export function buildHtmlEmailDocument(data) {
           <tr>
             <td style="padding:26px 32px 8px 32px; font-size:15px; line-height:1.75; color:#17314e;">
               ${textToHtml(details.greeting)}<br><br>
-              ${textToHtml(details.openingParagraph)}
+              ${textToHtml(introText)}
             </td>
           </tr>
 
@@ -647,6 +743,10 @@ export function buildHtmlEmailDocument(data) {
 
           <tr>
             <td style="padding:12px 32px 0 32px;">
+              ${modularLines.length ? `
+              <div style="font-size:14px; line-height:1.7; color:#17314e; border:1px solid #cad5df; padding:12px 14px; margin:0 0 12px 0; background-color:#f8fbff;">
+                ${modularLines.map((line) => `<div style="margin:0 0 6px 0;">${textToHtml(line)}</div>`).join('')}
+              </div>` : ''}
               <div style="font-size:12px; letter-spacing:0.12em; text-transform:uppercase; color:#6b7c8f; font-weight:700; padding:0 0 8px 2px;">
                 ${escapeHtml(details.forLine || 'For')}
               </div>
@@ -666,7 +766,7 @@ export function buildHtmlEmailDocument(data) {
           <tr>
             <td style="padding:14px 32px 0 32px; font-size:14px; line-height:1.8; color:#17314e;">
               ${textToHtml(details.endOfferLine || 'End offer')}<br><br>
-              ${textToHtml(details.closingParagraph)}
+              ${textToHtml(closingText)}
             </td>
           </tr>
 
@@ -684,7 +784,11 @@ export function buildHtmlEmailDocument(data) {
 }
 
 export function buildMailtoUrl(data, options = {}) {
-  const emailText = buildEmailText(data);
+  const emailText = buildEmailText(data, {
+    runtimeConfig: options.runtimeConfig || {},
+    contentBlockSelections: options.contentBlockSelections || {},
+    contentBlockDrafts: options.contentBlockDrafts || {}
+  });
   const to = encodeURIComponent(trimmed(data.emailTo));
   const params = [];
 

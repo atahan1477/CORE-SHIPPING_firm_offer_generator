@@ -48,6 +48,63 @@ export const baseConfig = {
   termsOptions: ["Free In Free Out", "Free In Liner Out", "Liner In Free Out", "Liner In Liner Out"],
   laytimeTermsOptions: ["sshinc", "shinc", "fshinc", "sshex", "shex", "fshex"],
   agentOptions: ["TBA", "Reba Shipping", "Supermaritime", "New Marine", "Hull Blyth Shipping", "AGL", "OBT"],
+  customerTierOptions: ["standard", "premium", "strategic"],
+  contentBlocks: {
+    intro: [
+      {
+        id: 'intro_default_global',
+        text: 'Thank you for the cargo proposal. Please find Owners indication as follows:',
+        tags: { region: 'global', productFamily: 'all', incoterm: 'all', currency: 'all', customerTier: 'all' }
+      },
+      {
+        id: 'intro_premium_global',
+        text: 'Many thanks for your continued support. Please find our priority indication below:',
+        tags: { region: 'global', productFamily: 'all', incoterm: 'all', currency: 'all', customerTier: 'premium' }
+      }
+    ],
+    product_spec: [
+      {
+        id: 'product_spec_general',
+        text: 'Cargo specification and handling profile are as per latest exchanged cargo details.',
+        tags: { region: 'global', productFamily: 'all', incoterm: 'all', currency: 'all', customerTier: 'all' }
+      }
+    ],
+    pricing: [
+      {
+        id: 'pricing_standard',
+        text: 'Pricing level remains subject to valid fixture timeline and terminal cost assumptions.',
+        tags: { region: 'global', productFamily: 'all', incoterm: 'all', currency: 'all', customerTier: 'all' }
+      }
+    ],
+    delivery_terms: [
+      {
+        id: 'delivery_terms_standard',
+        text: 'Delivery terms follow the selected voyage structure and named load/discharge terminals.',
+        tags: { region: 'global', productFamily: 'all', incoterm: 'all', currency: 'all', customerTier: 'all' }
+      }
+    ],
+    payment_terms: [
+      {
+        id: 'payment_terms_standard',
+        text: 'Freight payment terms remain as per CP recap and Owners instructions.',
+        tags: { region: 'global', productFamily: 'all', incoterm: 'all', currency: 'all', customerTier: 'all' }
+      }
+    ],
+    validity: [
+      {
+        id: 'validity_standard',
+        text: 'Indication validity is subject to tonnage availability and prompt counter confirmation.',
+        tags: { region: 'global', productFamily: 'all', incoterm: 'all', currency: 'all', customerTier: 'all' }
+      }
+    ],
+    closing: [
+      {
+        id: 'closing_default',
+        text: 'Looking forward to hear.',
+        tags: { region: 'global', productFamily: 'all', incoterm: 'all', currency: 'all', customerTier: 'all' }
+      }
+    ]
+  },
   formDefaults: {
     vessel: 'CORE TBN',
     account: 'Please advise',
@@ -85,6 +142,9 @@ export const baseConfig = {
     emailTo: '',
     emailCc: '',
     emailSubject: '',
+    blockRegion: 'global',
+    blockProductFamily: 'all',
+    customerTier: 'standard',
     greeting: 'Dear Sirs,',
     openingParagraph: 'Thank you for the cargo proposal. Please find Owners indication as follows:',
     markerLine: '++',
@@ -433,6 +493,52 @@ function sanitizeFormDefaults(value) {
   return next;
 }
 
+const CONTENT_BLOCK_CATEGORIES = ['intro', 'product_spec', 'pricing', 'delivery_terms', 'payment_terms', 'validity', 'closing'];
+
+function normalizeTagValue(value, fallback = 'all') {
+  const next = trimmed(value).toLowerCase();
+  return next || fallback;
+}
+
+function sanitizeBlockVariant(variant, category, index) {
+  const text = trimmed(variant?.text || '');
+  if (!text) return null;
+
+  const id = trimmed(variant?.id || `${category}_${index + 1}`);
+  const tags = variant?.tags && typeof variant.tags === 'object' ? variant.tags : {};
+  return {
+    id,
+    text,
+    tags: {
+      region: normalizeTagValue(tags.region, 'global'),
+      productFamily: normalizeTagValue(tags.productFamily, 'all'),
+      incoterm: normalizeTagValue(tags.incoterm, 'all'),
+      currency: normalizeTagValue(tags.currency, 'all'),
+      customerTier: normalizeTagValue(tags.customerTier, 'all')
+    }
+  };
+}
+
+function sanitizeContentBlocks(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  const fallback = baseConfig.contentBlocks || {};
+  const result = {};
+
+  CONTENT_BLOCK_CATEGORIES.forEach((category) => {
+    const items = Array.isArray(source[category]) && source[category].length
+      ? source[category]
+      : (Array.isArray(fallback[category]) ? fallback[category] : []);
+
+    const safeItems = items
+      .map((variant, index) => sanitizeBlockVariant(variant, category, index))
+      .filter(Boolean);
+
+    result[category] = safeItems;
+  });
+
+  return result;
+}
+
 function sanitizeTermBehavior(value, termsOptions) {
   const safeValue = value && typeof value === 'object' ? value : {};
   const result = {};
@@ -492,6 +598,8 @@ function sanitizeCustomization(value) {
     termsOptions: uniqueTrimmedList(source.termsOptions || baseConfig.termsOptions),
     laytimeTermsOptions: uniqueTrimmedList(source.laytimeTermsOptions || baseConfig.laytimeTermsOptions),
     agentOptions: uniqueTrimmedList(source.agentOptions || baseConfig.agentOptions),
+    customerTierOptions: uniqueTrimmedList(source.customerTierOptions || baseConfig.customerTierOptions),
+    contentBlocks: sanitizeContentBlocks(source.contentBlocks || baseConfig.contentBlocks),
     formDefaults: sanitizeFormDefaults(source.formDefaults || baseConfig.formDefaults),
     termBehavior: sanitizeTermBehavior(source.termBehavior || source.TERM_BEHAVIOR || {}, uniqueTrimmedList(source.termsOptions || baseConfig.termsOptions))
   };

@@ -371,6 +371,43 @@
       line-height: 1.55;
     }
 
+    .content-blocks-panel {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .content-block-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: linear-gradient(180deg, #ffffff, #f7f9fc);
+    }
+
+    .content-block-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .content-block-card textarea {
+      min-height: 66px;
+      margin-bottom: 8px;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .content-block-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     .spec-check-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1041,6 +1078,22 @@ Indication is based on current tariffs for load/disch costs and d/as</textarea>
                   <label for="emailSubject">Subject</label>
                   <input id="emailSubject" name="emailSubject" placeholder="Auto-generated if left blank" />
                 </div>
+                <div class="field">
+                  <label for="blockRegion">Offer region</label>
+                  <input id="blockRegion" name="blockRegion" value="global" placeholder="e.g. emea, apac, global" />
+                </div>
+                <div class="field">
+                  <label for="blockProductFamily">Product family</label>
+                  <input id="blockProductFamily" name="blockProductFamily" value="all" placeholder="e.g. steel, project, bulk" />
+                </div>
+                <div class="field">
+                  <label for="customerTier">Customer tier</label>
+                  <select id="customerTier" name="customerTier">
+                    <option value="standard" selected>standard</option>
+                    <option value="premium">premium</option>
+                    <option value="strategic">strategic</option>
+                  </select>
+                </div>
                 <div class="field full">
                   <label for="greeting">Greeting</label>
                   <input id="greeting" name="greeting" value="Dear Sirs," />
@@ -1064,6 +1117,11 @@ Indication is based on current tariffs for load/disch costs and d/as</textarea>
                 <div class="field">
                   <label for="closingParagraph">Closing paragraph</label>
                   <input id="closingParagraph" name="closingParagraph" value="Looking forward to hear" />
+                </div>
+                <div class="field full">
+                  <label>Auto-picked content blocks</label>
+                  <div class="muted-note">Modules are selected from metadata tags (region, product family, incoterm, currency, customer tier). Use <strong>Alternative wording</strong> for one-click swap, then approve edited text as a reusable variant if needed.</div>
+                  <div id="contentBlocksPanel"></div>
                 </div>
               </div>
             </div>
