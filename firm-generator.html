@@ -256,6 +256,53 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
     }
 
+    .quick-offer-panel {
+      border: 1px solid rgba(22,53,93,0.22);
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(243,248,255,0.98));
+    }
+
+    .quick-offer-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .quick-offer-note {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    body.quick-offer-mode .quick-required label {
+      color: #0d4f8a;
+    }
+
+    body.quick-offer-mode .quick-required input,
+    body.quick-offer-mode .quick-required textarea {
+      border-color: #4f91cb;
+      box-shadow: 0 0 0 2px rgba(79,145,203,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+
+    .quick-optional.hidden {
+      display: none;
+    }
+
+    .quick-advanced {
+      margin-top: 10px;
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+    }
+
+    .quick-advanced summary {
+      cursor: pointer;
+      color: var(--navy);
+      font-weight: 800;
+      font-size: 0.8rem;
+      user-select: none;
+    }
+
     .section-title {
       display: flex;
       justify-content: space-between;
@@ -839,6 +886,22 @@
           <form id="offerForm" class="form-sections">
             <div class="section">
               <div class="section-title">
+                <h3>Quick Offer (60s)</h3>
+                <div class="section-tag">Autofill from profile + latest accepted template</div>
+              </div>
+              <div class="quick-offer-row">
+                <button type="button" class="primary" id="quickOfferBtn">Quick Offer (60s)</button>
+                <button type="button" class="accent hidden" id="generateDraftBtn">Generate Draft</button>
+              </div>
+              <p class="quick-offer-note">Auto-fills standard fields and focuses only required edits: quantity/cargo, price, and shipment window.</p>
+              <details class="quick-advanced" id="advancedQuickOffer">
+                <summary>Advanced</summary>
+                <p class="quick-offer-note">Expand to edit optional sections (agents, clauses, and full signature details).</p>
+              </details>
+            </div>
+
+            <div class="section">
+              <div class="section-title">
                 <h3>1. Vessel & Cargo</h3>
                 <div class="section-tag">Specs auto-load from structured rows</div>
               </div>
@@ -851,7 +914,7 @@
                   <label for="account">Account</label>
                   <input id="account" name="account" value="Please advise" />
                 </div>
-                <div class="field full">
+                <div class="field full quick-required">
                   <label for="cargo">Cargo</label>
                   <input id="cargo" name="cargo" value="As per given details" placeholder="Enter cargo details" />
                 </div>
@@ -890,7 +953,7 @@
                 <div class="section-tag">Port suffix editable</div>
               </div>
               <div class="grid">
-                <div class="field">
+                <div class="field quick-required">
                   <label for="laycanDate">Lay/can</label>
                   <input id="laycanDate" name="laycanDate" value="01-10 Sep 2024" />
                 </div>
@@ -934,7 +997,7 @@
                   <label for="freightTerms">Freight terms</label>
                   <select id="freightTerms" name="freightTerms"></select>
                 </div>
-                <div class="field">
+                <div class="field quick-required">
                   <label for="freightAmount">Freight amount</label>
                   <input id="freightAmount" name="freightAmount" value="85.00" />
                 </div>
@@ -987,7 +1050,7 @@
               </div>
             </div>
 
-            <div class="section">
+            <div class="section quick-optional">
               <div class="section-title">
                 <h3>4. Agents & Clauses</h3>
                 <div class="section-tag">Extra clauses supported</div>
@@ -1068,7 +1131,7 @@ Indication is based on current tariffs for load/disch costs and d/as</textarea>
               </div>
             </div>
 
-            <div class="section">
+            <div class="section quick-optional">
               <div class="section-title">
                 <h3>6. Signature Block</h3>
                 <div class="section-tag">Core Shipping style</div>

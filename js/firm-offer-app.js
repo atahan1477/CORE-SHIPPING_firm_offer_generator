@@ -19,6 +19,8 @@ const LEGACY_THEME_STORAGE_KEY = 'firmOfferGeneratorTheme';
 const LEGACY_APPLICABLE_CONTRACT_TEXT = 'Clean Gencon 94 to apply';
 const UPDATED_APPLICABLE_CONTRACT_TEXT = 'Carriers BN';
 const CUSTOMIZATION_SIGNATURE_KEY = 'coreShippingCustomizationSignatureV1';
+const QUICK_ACCEPTED_TEMPLATE_STORAGE_KEY = 'coreShippingQuickAcceptedTemplatesV1';
+const QUICK_CUSTOMER_PROFILE_STORAGE_KEY = 'coreShippingQuickCustomerProfilesV1';
 
 let runtimeConfig = getRuntimeConfig();
 
@@ -48,6 +50,10 @@ const vesselSpecsField = document.getElementById('vesselSpecs');
 const vesselSpecsHtmlField = document.getElementById('vesselSpecsHtml');
 const vesselSpecsPreview = document.getElementById('vesselSpecsPreview');
 const htmlPreviewFrame = document.getElementById('htmlPreviewFrame');
+const quickOfferBtn = document.getElementById('quickOfferBtn');
+const generateDraftBtn = document.getElementById('generateDraftBtn');
+const advancedQuickOffer = document.getElementById('advancedQuickOffer');
+const quickOptionalSections = Array.from(document.querySelectorAll('.quick-optional'));
 
 const fieldElements = Array.from(form.querySelectorAll('input[name], select[name], textarea[name]'));
 const fieldNames = fieldElements.map((element) => element.name);
@@ -55,6 +61,7 @@ const fieldNames = fieldElements.map((element) => element.name);
 let currentView = 'raw';
 let isApplyingExternalState = false;
 let lastSharedStateSignature = '';
+let quickModeEnabled = false;
 
 function currentDefaults() {
   return runtimeConfig.formDefaults || {};
@@ -122,6 +129,142 @@ function collectFormData() {
   });
 
   return data;
+}
+
+function loadJsonStorage(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveJsonStorage(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (_) {
+    // Ignore quota / private mode errors.
+  }
+}
+
+function customerKeyFromData(data) {
+  const account = trimmed(data.account || '').toLowerCase();
+  const emailTo = trimmed(data.emailTo || '').toLowerCase();
+  return `${account}::${emailTo}`.replace(/^::|::$/g, '') || 'unknown';
+}
+
+function inferLocaleGreeting(emailTo) {
+  const lower = trimmed(emailTo).toLowerCase();
+  if (!lower) return { greeting: 'Dear Sirs,', signOff: 'Best regards,' };
+
+  if (/\.(tr|de|fr|it|es|nl|be|eu)$/i.test(lower)) {
+    return { greeting: 'Dear Team,', signOff: 'Kind regards,' };
+  }
+
+  return { greeting: 'Dear Sirs,', signOff: 'Best regards,' };
+}
+
+function isoToday() {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+}
+
+function buildQuickSubject(data) {
+  const customer = trimmed(data.account) || 'Customer';
+  const product = trimmed(data.cargo) || trimmed(data.vessel) || 'Cargo';
+  const date = isoToday();
+  return `${customer} | ${product} | ${date}`;
+}
+
+function applyStandardClauses(data, baseExtraClauses = '') {
+  const standardClauses = [
+    'Payment terms: As per CP recap and invoice terms.',
+    'Delivery terms: Subject to berth/terminal readiness and operational clearance.',
+    'Offer validity: Subject open for prompt acceptance unless withdrawn.',
+    'Inspection: Cargo condition/quantity to be as per independent survey where applicable.',
+    `Loading terms: ${trimmed(data.loadingDays)} days ${trimmed(data.loadingTerms)}`
+  ].filter(Boolean);
+
+  const existing = trimmed(baseExtraClauses)
+    .split(/\n+/)
+    .map((line) => trimmed(line))
+    .filter(Boolean);
+  const deduped = [...existing];
+  standardClauses.forEach((clause) => {
+    if (!deduped.some((line) => line.toLowerCase() === clause.toLowerCase())) {
+      deduped.push(clause);
+    }
+  });
+  return deduped.join('\n');
+}
+
+function getQuickDefaults(baseData) {
+  const customerKey = customerKeyFromData(baseData);
+  const approvedTemplates = loadJsonStorage(QUICK_ACCEPTED_TEMPLATE_STORAGE_KEY);
+  const customerProfiles = loadJsonStorage(QUICK_CUSTOMER_PROFILE_STORAGE_KEY);
+  const customerTemplate = approvedTemplates[customerKey]?.data || null;
+  const profile = customerProfiles[customerKey] || {};
+  const localeFallback = inferLocaleGreeting(baseData.emailTo || profile.emailTo || '');
+
+  const merged = {
+    ...currentDefaults(),
+    ...profile,
+    ...(customerTemplate || {})
+  };
+
+  merged.emailSubject = buildQuickSubject({
+    ...merged,
+    ...baseData
+  });
+  merged.greeting = trimmed(merged.greeting) || localeFallback.greeting;
+  merged.signOff = trimmed(merged.signOff) || localeFallback.signOff;
+  merged.extraClauses = applyStandardClauses(merged, merged.extraClauses);
+
+  return merged;
+}
+
+function setQuickOptionalVisibility() {
+  const showOptional = !quickModeEnabled || Boolean(advancedQuickOffer?.open);
+  quickOptionalSections.forEach((section) => {
+    section.classList.toggle('hidden', !showOptional);
+  });
+}
+
+function setQuickMode(enabled) {
+  quickModeEnabled = Boolean(enabled);
+  document.body.classList.toggle('quick-offer-mode', quickModeEnabled);
+  if (generateDraftBtn) {
+    generateDraftBtn.classList.toggle('hidden', !quickModeEnabled);
+  }
+  if (!quickModeEnabled && advancedQuickOffer) {
+    advancedQuickOffer.open = false;
+  }
+  setQuickOptionalVisibility();
+}
+
+function persistAcceptedTemplate(snapshot) {
+  const customerKey = customerKeyFromData(snapshot);
+  const templates = loadJsonStorage(QUICK_ACCEPTED_TEMPLATE_STORAGE_KEY);
+  const profiles = loadJsonStorage(QUICK_CUSTOMER_PROFILE_STORAGE_KEY);
+
+  templates[customerKey] = {
+    updatedAt: new Date().toISOString(),
+    data: snapshot
+  };
+
+  profiles[customerKey] = {
+    account: snapshot.account || '',
+    emailTo: snapshot.emailTo || '',
+    emailCc: snapshot.emailCc || '',
+    greeting: snapshot.greeting || '',
+    signOff: snapshot.signOff || ''
+  };
+
+  saveJsonStorage(QUICK_ACCEPTED_TEMPLATE_STORAGE_KEY, templates);
+  saveJsonStorage(QUICK_CUSTOMER_PROFILE_STORAGE_KEY, profiles);
 }
 
 function migrateLegacyFormState(snapshot) {
@@ -572,12 +715,14 @@ document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('openDraftBtn').addEventListener('click', () => {
+  persistAcceptedTemplate(collectFormData());
   const url = buildMailtoUrl(collectFormData(), { includeBody: true });
   window.location.href = url;
 });
 
 document.getElementById('openDraftHtmlBtn').addEventListener('click', async () => {
   const formData = collectFormData();
+  persistAcceptedTemplate(formData);
   const html = buildHtmlEmailDocument(formData);
   let copiedRichHtml = false;
   let copyFailed = false;
@@ -599,3 +744,36 @@ document.getElementById('openDraftHtmlBtn').addEventListener('click', async () =
     showStatus('Draft opened. HTML copied as text only; rich paste may not be supported here.');
   }
 });
+
+if (quickOfferBtn) {
+  quickOfferBtn.addEventListener('click', () => {
+    const currentData = collectFormData();
+    const quickDefaults = getQuickDefaults(currentData);
+    applySnapshotToForm({
+      ...currentData,
+      ...quickDefaults
+    });
+    setQuickMode(true);
+    pushWholeFormToStore();
+    refreshPreview();
+    showStatus('Quick Offer applied. Update highlighted required fields, then Generate Draft.');
+  });
+}
+
+if (generateDraftBtn) {
+  generateDraftBtn.addEventListener('click', () => {
+    const snapshot = collectFormData();
+    persistAcceptedTemplate(snapshot);
+    const url = buildMailtoUrl(snapshot, { includeBody: true });
+    window.location.href = url;
+    showStatus('Draft generated and latest accepted template saved for this customer.');
+  });
+}
+
+if (advancedQuickOffer) {
+  advancedQuickOffer.addEventListener('toggle', () => {
+    setQuickOptionalVisibility();
+  });
+}
+
+setQuickMode(false);
