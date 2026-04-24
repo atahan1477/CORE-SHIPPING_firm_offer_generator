@@ -67,12 +67,6 @@
     }
 
 
-    .top-links {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 12px;
-    }
-
     .top-link {
       display: inline-flex;
       align-items: center;
@@ -144,6 +138,15 @@
 
     .hero-copy p {
       display: none;
+    }
+
+    .hero-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .theme-toggle {
@@ -706,6 +709,7 @@
       .hero { padding: 14px; }
       .hero-left { flex-direction: column; align-items: flex-start; }
       .hero-title-row { flex-direction: column; align-items: flex-start; }
+      .hero-actions { margin-left: 0; justify-content: flex-start; }
       .logo-box { width: 100%; max-width: 330px; }
       .grid, .grid-3, .spec-check-grid { grid-template-columns: 1fr; }
     }
@@ -836,10 +840,6 @@
 </head>
 <body>
   <div class="page">
-    <div class="top-links">
-      <a class="top-link" href="./customize.html">Customize</a>
-      <a class="top-link" href="./index.html">← Back to Tools</a>
-    </div>
     <div class="layout">
       <div class="workspace-column">
     <div class="hero">
@@ -850,6 +850,10 @@
         <div class="hero-copy">
           <div class="hero-title-row">
             <h1>Firm Offer Mail Generator</h1>
+            <div class="hero-actions">
+              <a class="top-link" href="./customize.html">Customize</a>
+              <a class="top-link" href="./index.html">← Back to Tools</a>
+            </div>
           </div>
         </div>
       </div>
