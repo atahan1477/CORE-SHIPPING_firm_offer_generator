@@ -1,11 +1,8 @@
 import {
-  baseConfig,
   getRuntimeConfig,
   saveRuntimeCustomization,
-  clearRuntimeCustomization,
   syncRuntimeCustomizationFromServer,
-  pushRuntimeCustomizationToServer,
-  resetRuntimeCustomizationOnServer
+  pushRuntimeCustomizationToServer
 } from '../shared/config.js';
 
 const optionGroups = [
@@ -19,7 +16,6 @@ const optionGroups = [
 ];
 
 const statusEl = document.getElementById('status');
-const adminPasswordInput = document.getElementById('adminPassword');
 const vesselSelect = document.getElementById('customizerVesselSelect');
 const vesselNameInput = document.getElementById('customizerVesselName');
 const rawSpecsInput = document.getElementById('customizerRawSpecs');
@@ -523,10 +519,6 @@ function buildCustomizationPayload() {
   return payload;
 }
 
-function getAdminPassword() {
-  return String(adminPasswordInput?.value || '').trim();
-}
-
 async function reloadSharedCustomization(force = false) {
   const result = await syncRuntimeCustomizationFromServer({ force });
   working = createWorkingCopy(getRuntimeConfig());
@@ -535,27 +527,15 @@ async function reloadSharedCustomization(force = false) {
   return result;
 }
 
-document.getElementById('loadSavedBtn').addEventListener('click', async () => {
-  try {
-    const result = await reloadSharedCustomization(true);
-    if (result.configured === false) {
-      showStatus('Shared storage is not configured yet. Using local/default data.', true);
-      return;
-    }
-    showStatus('Shared customization reloaded.');
-  } catch (error) {
-    showStatus(error.message, true);
-  }
-});
-
 document.getElementById('saveCustomizeBtn').addEventListener('click', async () => {
   try {
-    const adminPassword = getAdminPassword();
-    if (!adminPassword) {
-      throw new Error('Enter the admin save password first.');
+    const payload = buildCustomizationPayload();
+    const adminPassword = window.prompt('Enter admin password to save shared customization', '') ?? '';
+    if (!adminPassword.trim()) {
+      showStatus('Shared save cancelled: admin password is required.', true);
+      return;
     }
 
-    const payload = buildCustomizationPayload();
     const response = await pushRuntimeCustomizationToServer(payload, adminPassword);
     working = createWorkingCopy(getRuntimeConfig());
     selectedVessel = working.vesselOptions[0] || '';
@@ -563,28 +543,6 @@ document.getElementById('saveCustomizeBtn').addEventListener('click', async () =
     showStatus(response.writable === false
       ? 'Saved locally, but shared writing is not enabled on Vercel.'
       : 'Shared customization saved. All users will see it after refresh.');
-  } catch (error) {
-    showStatus(error.message, true);
-  }
-});
-
-document.getElementById('resetAllBtn').addEventListener('click', async () => {
-  try {
-    if (!window.confirm('Reset the shared customization for all users?')) return;
-
-    const adminPassword = getAdminPassword();
-    if (!adminPassword) {
-      throw new Error('Enter the admin save password first.');
-    }
-
-    await resetRuntimeCustomizationOnServer(adminPassword);
-    clearRuntimeCustomization({ source: 'customize-app-reset' });
-    working = createWorkingCopy(baseConfig);
-    working.termBehavior = clone(getRuntimeConfig().termBehavior || {});
-    selectedVessel = working.vesselOptions[0] || '';
-    renderAll();
-    customizationJson.value = '';
-    showStatus('Shared customization reset. All users will see defaults after refresh.');
   } catch (error) {
     showStatus(error.message, true);
   }

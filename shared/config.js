@@ -728,14 +728,18 @@ export async function pushRuntimeCustomizationToServer(value, adminPassword = ''
   }
 
   const safe = sanitizeCustomization(value);
+  const safePassword = trimmed(adminPassword);
   const response = await fetch(REMOTE_CUSTOMIZATION_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      'x-customize-password': trimmed(adminPassword)
+      'x-customize-password': safePassword
     },
-    body: JSON.stringify({ customization: safe })
+    body: JSON.stringify({
+      customization: safe,
+      adminPassword: safePassword
+    })
   });
 
   const payload = await readResponseJson(response);
