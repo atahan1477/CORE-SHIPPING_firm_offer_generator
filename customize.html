@@ -46,7 +46,6 @@
     html[data-theme="dark"] .option-card,
     html[data-theme="dark"] .structured-row,
     html[data-theme="dark"] .preview-box,
-    html[data-theme="dark"] .top-link,
     html[data-theme="dark"] button.secondary {
       background: #152337;
       border-color: #31445d;
@@ -72,18 +71,9 @@
       gap: 14px;
     }
 
-    .top-links, .top-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .top-links { justify-content: space-between; }
-
-    .top-link, button {
+    button {
       appearance: none;
       border: 0;
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -95,7 +85,7 @@
       cursor: pointer;
     }
 
-    .top-link, .secondary {
+    .secondary {
       border: 1px solid var(--border);
       background: linear-gradient(180deg, #ffffff, #f6f9fc);
       color: var(--navy);
@@ -257,10 +247,10 @@
 
     .auth-bar {
       margin-top: 16px;
-      display: grid;
-      grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
-      gap: 14px;
-      align-items: end;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
     }
 
     .auth-card {
@@ -293,7 +283,7 @@
     }
 
     @media (max-width: 860px) {
-      .grid, .repeat-row, .auth-bar { grid-template-columns: 1fr; }
+      .grid, .repeat-row { grid-template-columns: 1fr; }
       .structured-row { grid-template-columns: 1fr; }
       body { padding: 12px; }
     }
@@ -301,30 +291,15 @@
 </head>
 <body>
   <div class="page">
-    <div class="top-links">
-      <div class="top-actions">
-        <a class="top-link" href="./index.html">← Back to Tools</a>
-        <a class="top-link" href="./firm-generator.html">Open Generator</a>
-      </div>
-      <div class="top-actions">
-        <button type="button" class="secondary" id="loadSavedBtn">Reload Shared</button>
-        <button type="button" class="danger" id="resetAllBtn">Reset Shared</button>
-        <button type="button" class="accent" id="saveCustomizeBtn">Save for All Users</button>
-      </div>
-    </div>
-
     <section class="hero">
       <h1>Customize Generator</h1>
-      <p>Use this page to manage the Firm Offer Generator data without editing source code. You can add or remove vessels, maintain structured vessel spec rows, update selectables, adjust term meanings, and change generator defaults. Shared saves are loaded through your Vercel API so all users see the same setup after refresh.</p>
       <div class="auth-bar">
         <div class="auth-card">
           <div class="field">
             <label for="adminPassword">Admin save password</label>
-            <input id="adminPassword" type="password" placeholder="Required to save or reset for all users" autocomplete="current-password" />
+            <input id="adminPassword" type="password" placeholder="Required to save for all users" autocomplete="current-password" />
           </div>
-        </div>
-        <div class="note auth-card">
-          Shared load works for everyone. Shared save and reset require the admin password that you set in Vercel environment variables. Browser import/export still works as a backup tool.
+          <button type="button" class="accent" id="saveCustomizeBtn">Save for All Users</button>
         </div>
       </div>
     </section>
