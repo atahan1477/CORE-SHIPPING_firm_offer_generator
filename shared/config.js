@@ -135,22 +135,29 @@ export const BASE_TERM_BEHAVIOR = {
 };
 
 export const BASE_TERM_CLAUSES = {
-  FIFO: {
+  'Free In Free Out': {
     detentionClause: 'Congestion, if any, to count as detention both ends.',
     speedClause: ''
   },
-  FILO: {
+  'Free In Liner Out': {
     detentionClause: 'Congestion, if any, to count as detention at load port only.',
     speedClause: 'Discharge to be performed as fast as vessel can discharge.'
   },
-  LIFO: {
+  'Liner In Free Out': {
     detentionClause: 'Congestion, if any, to count as detention at discharge port only.',
     speedClause: 'Loading to be performed as fast as vessel can load.'
   },
-  LILO: {
+  'Liner In Liner Out': {
     detentionClause: 'Congestion, if any, not to count as detention, unless otherwise agreed.',
     speedClause: 'Loading/discharging to be performed as fast as vessel can load/discharge.'
   }
+};
+
+const TERM_CLAUSE_ALIASES = {
+  'Free In Free Out': ['FIFO'],
+  'Free In Liner Out': ['FILO'],
+  'Liner In Free Out': ['LIFO'],
+  'Liner In Liner Out': ['LILO']
 };
 
 const customizationChannel = typeof BroadcastChannel !== 'undefined'
@@ -484,7 +491,9 @@ function sanitizeTermClauses(value, termsOptions) {
 
   orderedTerms.forEach((term) => {
     const base = BASE_TERM_CLAUSES[term] || { detentionClause: '', speedClause: '' };
-    const override = safeValue[term] && typeof safeValue[term] === 'object' ? safeValue[term] : {};
+    const aliases = TERM_CLAUSE_ALIASES[term] || [];
+    const overrideKey = [term, ...aliases].find((key) => safeValue[key] && typeof safeValue[key] === 'object');
+    const override = overrideKey ? safeValue[overrideKey] : {};
 
     result[term] = {
       detentionClause: override.detentionClause !== undefined ? String(override.detentionClause ?? '') : base.detentionClause,
