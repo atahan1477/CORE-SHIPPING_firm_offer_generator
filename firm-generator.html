@@ -4,6 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Core Shipping | Firm Offer Mail Generator</title>
+  <script>
+    (function () {
+      const THEME_STORAGE_KEY = 'coreShippingTheme';
+      const LEGACY_THEME_STORAGE_KEY = 'firmOfferGeneratorTheme';
+
+      let theme = 'light';
+      try {
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        const legacy = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          theme = stored;
+        } else if (legacy === 'dark' || legacy === 'light') {
+          theme = legacy;
+          localStorage.setItem(THEME_STORAGE_KEY, legacy);
+        }
+      } catch (_) {}
+
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
   <style>
     :root {
       --bg: #e9eff6;
@@ -697,114 +717,113 @@
       }
     }
 
-    body[data-theme="dark"] {
+    html[data-theme="dark"] {
       color: #e5edf8;
       background:
         radial-gradient(circle at top left, rgba(90,125,170,0.14), transparent 24%),
         linear-gradient(180deg, #0f1724 0%, #101c2b 100%);
     }
 
-    body[data-theme="dark"] html,
     html[data-theme="dark"] {
       color-scheme: dark;
     }
 
-    body[data-theme="dark"] .hero,
-    body[data-theme="dark"] .panel {
+    html[data-theme="dark"] .hero,
+    html[data-theme="dark"] .panel {
       background: rgba(16, 24, 38, 0.94);
       border-color: rgba(72, 94, 124, 0.9);
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
     }
 
-    body[data-theme="dark"] .section,
-    body[data-theme="dark"] .mail-meta-row,
-    body[data-theme="dark"] .preview-shell,
-    body[data-theme="dark"] .preview-body,
-    body[data-theme="dark"] .view-toggle,
-    body[data-theme="dark"] .theme-toggle {
+    html[data-theme="dark"] .section,
+    html[data-theme="dark"] .mail-meta-row,
+    html[data-theme="dark"] .preview-shell,
+    html[data-theme="dark"] .preview-body,
+    html[data-theme="dark"] .view-toggle,
+    html[data-theme="dark"] .theme-toggle {
       background: linear-gradient(180deg, #162233, #131d2c);
       border-color: #31445d;
       box-shadow: none;
     }
 
-    body[data-theme="dark"] .logo-box {
+    html[data-theme="dark"] .logo-box {
       background: linear-gradient(180deg, #ffffff, #f6f9fc);
       border-color: #d7e0eb;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
     }
 
-    body[data-theme="dark"] .logo-box img {
+    html[data-theme="dark"] .logo-box img {
       filter: none;
       opacity: 1;
       mix-blend-mode: normal;
     }
 
-    body[data-theme="dark"] .panel-header {
+    html[data-theme="dark"] .panel-header {
       background: linear-gradient(180deg, rgba(51,74,106,0.34), rgba(17,27,41,0.2));
       border-bottom-color: #31445d;
     }
 
-    body[data-theme="dark"] .section-title h3,
-    body[data-theme="dark"] .panel-header h2,
-    body[data-theme="dark"] .hero-copy h1,
-    body[data-theme="dark"] .mail-meta-row strong,
-    body[data-theme="dark"] .subject-text,
-    body[data-theme="dark"] .preview-body,
-    body[data-theme="dark"] .theme-toggle-label,
-    body[data-theme="dark"] label {
+    html[data-theme="dark"] .section-title h3,
+    html[data-theme="dark"] .panel-header h2,
+    html[data-theme="dark"] .hero-copy h1,
+    html[data-theme="dark"] .mail-meta-row strong,
+    html[data-theme="dark"] .subject-text,
+    html[data-theme="dark"] .preview-body,
+    html[data-theme="dark"] .theme-toggle-label,
+    html[data-theme="dark"] label {
       color: #e5edf8;
     }
 
-    body[data-theme="dark"] .section-tag,
-    body[data-theme="dark"] .panel-header span,
-    body[data-theme="dark"] .muted-note,
-    body[data-theme="dark"] .mail-meta-row,
-    body[data-theme="dark"] .vtab,
-    body[data-theme="dark"] .theme-toggle-label,
-    body[data-theme="dark"] .subject-bar small {
+    html[data-theme="dark"] .section-tag,
+    html[data-theme="dark"] .panel-header span,
+    html[data-theme="dark"] .muted-note,
+    html[data-theme="dark"] .mail-meta-row,
+    html[data-theme="dark"] .vtab,
+    html[data-theme="dark"] .theme-toggle-label,
+    html[data-theme="dark"] .subject-bar small {
       color: #9fb2ca;
     }
 
-    body[data-theme="dark"] input,
-    body[data-theme="dark"] select,
-    body[data-theme="dark"] textarea {
+    html[data-theme="dark"] input,
+    html[data-theme="dark"] select,
+    html[data-theme="dark"] textarea {
       background: #101926;
       color: #e5edf8;
       border-color: #31445d;
       box-shadow: none;
     }
 
-    body[data-theme="dark"] input::placeholder,
-    body[data-theme="dark"] textarea::placeholder {
+    html[data-theme="dark"] input::placeholder,
+    html[data-theme="dark"] textarea::placeholder {
       color: #8095af;
     }
 
-    body[data-theme="dark"] .spec-check-item {
+    html[data-theme="dark"] .spec-check-item {
       background: linear-gradient(180deg, #1a2a3f, #152337);
       border-color: #31445d;
       color: #e5edf8;
       box-shadow: none;
     }
 
-    body[data-theme="dark"] .subject-bar {
+    html[data-theme="dark"] .subject-bar {
       background: linear-gradient(180deg, #1d385b, #142742);
     }
 
-    body[data-theme="dark"] .preview-body {
+    html[data-theme="dark"] .preview-body {
       background: #101926;
       color: #dbe6f3;
       -webkit-text-fill-color: #dbe6f3;
     }
 
-    body[data-theme="dark"] .vtab.active,
-    body[data-theme="dark"] .secondary {
+    html[data-theme="dark"] .vtab.active,
+    html[data-theme="dark"] .secondary {
       background: #1a2a3f;
       color: #e5edf8;
       border-color: #31445d;
       box-shadow: none;
     }
 
-    body[data-theme="dark"] .html-preview-frame {
+    html[data-theme="dark"] .html-preview-frame {
       background: #ffffff;
     }
   </style>
