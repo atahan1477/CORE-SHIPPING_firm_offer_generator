@@ -47,13 +47,29 @@ const vesselSpecsField = document.getElementById('vesselSpecs');
 const vesselSpecsHtmlField = document.getElementById('vesselSpecsHtml');
 const vesselSpecsPreview = document.getElementById('vesselSpecsPreview');
 const htmlPreviewFrame = document.getElementById('htmlPreviewFrame');
+const validationSummary = document.getElementById('validationSummary');
+const previewColumn = document.getElementById('previewColumn');
+const wizardStepLabel = document.getElementById('wizardStepLabel');
+const wizardBackBtn = document.getElementById('wizardBackBtn');
+const wizardNextBtn = document.getElementById('wizardNextBtn');
+const mobileBackBtn = document.getElementById('mobileBackBtn');
+const mobileNextBtn = document.getElementById('mobileNextBtn');
+const mobilePreviewBtn = document.getElementById('mobilePreviewBtn');
+const mobileCopyBtn = document.getElementById('mobileCopyBtn');
+const stepContents = Array.from(document.querySelectorAll('[data-step-content]'));
+const stepPills = Array.from(document.querySelectorAll('[data-step-pill]'));
+const advancedSettings = document.getElementById('advancedSettings');
 
 const fieldElements = Array.from(form.querySelectorAll('input[name], select[name], textarea[name]'));
 const fieldNames = fieldElements.map((element) => element.name);
 
+const WIZARD_STEPS = 3;
 let currentView = 'raw';
+let currentStep = 1;
 let isApplyingExternalState = false;
 let lastSharedStateSignature = '';
+let statusTimeoutId = 0;
+let previewRefreshHandle = 0;
 
 function currentDefaults() {
   return runtimeConfig.formDefaults || {};
@@ -121,6 +137,101 @@ function collectFormData() {
   });
 
   return data;
+}
+
+function clampStep(step) {
+  const parsed = Number.parseInt(step, 10);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.min(WIZARD_STEPS, Math.max(1, parsed));
+}
+
+function setStep(step, options = {}) {
+  const nextStep = clampStep(step);
+  currentStep = nextStep;
+
+  stepContents.forEach((content) => {
+    const isActive = Number(content.dataset.stepContent) === nextStep;
+    content.classList.toggle('hidden-step', !isActive);
+  });
+
+  stepPills.forEach((pill) => {
+    const isActive = Number(pill.dataset.stepPill) === nextStep;
+    pill.classList.toggle('active', isActive);
+    pill.setAttribute('aria-current', isActive ? 'step' : 'false');
+  });
+
+  const isFirstStep = nextStep === 1;
+  const isLastStep = nextStep === WIZARD_STEPS;
+  if (wizardStepLabel) wizardStepLabel.textContent = `Step ${nextStep} of ${WIZARD_STEPS}`;
+  if (wizardBackBtn) wizardBackBtn.disabled = isFirstStep;
+  if (mobileBackBtn) mobileBackBtn.disabled = isFirstStep;
+  if (wizardNextBtn) wizardNextBtn.textContent = isLastStep ? 'Review Preview' : 'Next';
+  if (mobileNextBtn) mobileNextBtn.textContent = isLastStep ? 'Preview' : 'Next';
+
+  if (options.scroll !== false) {
+    document.querySelector('.workspace-column')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function goToNextStep() {
+  if (currentStep >= WIZARD_STEPS) {
+    scrollToPreview();
+    return;
+  }
+  setStep(currentStep + 1);
+}
+
+function goToPreviousStep() {
+  setStep(currentStep - 1);
+}
+
+function scrollToPreview() {
+  previewColumn?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function initializeAdvancedDisclosure() {
+  if (!advancedSettings) return;
+  if (window.matchMedia('(max-width: 880px)').matches) {
+    advancedSettings.removeAttribute('open');
+  } else {
+    advancedSettings.setAttribute('open', '');
+  }
+}
+
+function getValidationWarnings(data) {
+  const warnings = [];
+  if (!trimmed(data.pol)) warnings.push('POL is empty; subject and offer will use the POL fallback.');
+  if (!trimmed(data.pod)) warnings.push('POD is empty; subject and offer will use the POD fallback.');
+  if (!trimmed(data.cargo)) warnings.push('Cargo is empty; add cargo details before sending.');
+
+  const mailtoUrl = buildMailtoUrl(data, { includeBody: true });
+  if (mailtoUrl.length > 1800) {
+    warnings.push('Email draft link is long. If the mail client cuts text, use Copy or Download instead.');
+  }
+
+  return warnings;
+}
+
+function renderValidationWarnings(data) {
+  if (!validationSummary) return;
+  const warnings = getValidationWarnings(data);
+
+  validationSummary.classList.toggle('visible', warnings.length > 0);
+  if (!warnings.length) {
+    validationSummary.textContent = '';
+    return;
+  }
+
+  const items = warnings.map((warning) => `<li>${warning}</li>`).join('');
+  validationSummary.innerHTML = `<ul>${items}</ul>`;
+}
+
+function queuePreviewRefresh() {
+  if (previewRefreshHandle) return;
+  previewRefreshHandle = window.requestAnimationFrame(() => {
+    previewRefreshHandle = 0;
+    refreshPreview();
+  });
 }
 
 function migrateLegacyFormState(snapshot) {
@@ -323,6 +434,25 @@ async function copyHtmlForRichPaste(htmlDocument) {
   return false;
 }
 
+function downloadTextFile(filename, content, type = 'text/plain;charset=utf-8') {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function warnIfLongMailto(url) {
+  if (url.length > 1800) {
+    showStatus('Draft link is long. Copy or download is safer if your mail client truncates it.', true);
+  }
+}
+
 function refreshHtmlPreview() {
   htmlPreviewFrame.setAttribute('scrolling', 'yes');
   htmlPreviewFrame.srcdoc = buildHtmlPreviewDocument();
@@ -334,6 +464,7 @@ function refreshPreview() {
 
   const data = collectFormData();
   const emailText = buildEmailText(data);
+  renderValidationWarnings(data);
 
   subjectPreview.textContent = emailText.subject;
   toPreview.textContent = trimmed(data.emailTo) || '—';
@@ -345,11 +476,18 @@ function refreshPreview() {
   }
 }
 
-function showStatus(message) {
+function showStatus(message, isError = false) {
+  if (statusTimeoutId) {
+    window.clearTimeout(statusTimeoutId);
+  }
   statusEl.textContent = message;
-  setTimeout(() => {
-    if (statusEl.textContent === message) statusEl.textContent = '';
-  }, 2600);
+  statusEl.classList.toggle('error', isError);
+  statusTimeoutId = window.setTimeout(() => {
+    if (statusEl.textContent === message) {
+      statusEl.textContent = '';
+      statusEl.classList.remove('error');
+    }
+  }, 4200);
 }
 
 function refreshThemeSensitiveUI() {
@@ -497,7 +635,7 @@ function handleAnyInput(event) {
   }
 
   pushWholeFormToStore();
-  refreshPreview();
+  queuePreviewRefresh();
 }
 
 runtimeConfig = getRuntimeConfig();
@@ -507,6 +645,8 @@ syncStructuredVesselSpecs();
 initializeSharedState({ forceDefaults: customizationDefaultsChanged() });
 initializeTheme();
 refreshPreview();
+initializeAdvancedDisclosure();
+setStep(1, { scroll: false });
 
 (async () => {
   try {
@@ -515,7 +655,7 @@ refreshPreview();
       showStatus('Shared customization loaded.');
     }
   } catch (error) {
-    console.error('Shared customization load failed:', error);
+    showStatus(`Shared customization not loaded: ${error.message || 'request failed'}.`, true);
   }
 })();
 
@@ -534,6 +674,22 @@ window.addEventListener('storage', (event) => {
   }
 });
 
+stepPills.forEach((pill) => {
+  pill.addEventListener('click', () => setStep(pill.dataset.stepPill));
+});
+
+wizardBackBtn?.addEventListener('click', goToPreviousStep);
+wizardNextBtn?.addEventListener('click', goToNextStep);
+mobileBackBtn?.addEventListener('click', goToPreviousStep);
+mobileNextBtn?.addEventListener('click', goToNextStep);
+mobilePreviewBtn?.addEventListener('click', scrollToPreview);
+mobileCopyBtn?.addEventListener('click', () => {
+  const copyButton = currentView === 'html'
+    ? document.getElementById('copyHtmlBtn')
+    : document.getElementById('copyRawBtn');
+  copyButton?.click();
+});
+
 document.getElementById('tabRaw').addEventListener('click', () => switchView('raw'));
 document.getElementById('tabHtml').addEventListener('click', () => switchView('html'));
 
@@ -544,10 +700,10 @@ document.getElementById('copyRawBtn').addEventListener('click', async () => {
       await navigator.clipboard.writeText(emailText.body);
       showStatus('Raw mail copied to clipboard.');
     } else {
-      showStatus('Clipboard not available in this browser.');
+      showStatus('Clipboard not available in this browser.', true);
     }
   } catch (_) {
-    showStatus('Copy failed.');
+    showStatus('Copy failed.', true);
   }
 });
 
@@ -560,15 +716,36 @@ document.getElementById('copyHtmlBtn').addEventListener('click', async () => {
     } else if (navigator.clipboard?.writeText) {
       showStatus('HTML copied as text only. Rich paste may not be supported in this browser.');
     } else {
-      showStatus('Clipboard not available in this browser.');
+      showStatus('Clipboard not available in this browser.', true);
     }
   } catch (_) {
-    showStatus('Copy failed.');
+    showStatus('Copy failed.', true);
+  }
+});
+
+document.getElementById('downloadRawBtn').addEventListener('click', () => {
+  try {
+    const emailText = buildEmailText(collectFormData());
+    downloadTextFile('core-shipping-firm-offer.txt', `${emailText.subject}\n\n${emailText.body}`);
+    showStatus('Raw mail downloaded as .txt.');
+  } catch (_) {
+    showStatus('Download failed.', true);
+  }
+});
+
+document.getElementById('downloadHtmlBtn').addEventListener('click', () => {
+  try {
+    const html = buildHtmlEmailDocument(collectFormData());
+    downloadTextFile('core-shipping-firm-offer.html', html, 'text/html;charset=utf-8');
+    showStatus('HTML mail downloaded as .html.');
+  } catch (_) {
+    showStatus('Download failed.', true);
   }
 });
 
 document.getElementById('openDraftBtn').addEventListener('click', () => {
   const url = buildMailtoUrl(collectFormData(), { includeBody: true });
+  warnIfLongMailto(url);
   window.location.href = url;
 });
 
@@ -585,6 +762,7 @@ document.getElementById('openDraftHtmlBtn').addEventListener('click', async () =
   }
 
   const url = buildMailtoUrl(formData, { includeBody: false });
+  warnIfLongMailto(url);
   window.location.href = url;
 
   if (copiedRichHtml) {

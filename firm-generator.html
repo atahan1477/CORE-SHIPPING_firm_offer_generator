@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Core Shipping | Firm Offer Mail Generator</title>
+  <link rel="stylesheet" href="./styles/core-ui.css" />
   <script>
     (function () {
       const THEME_STORAGE_KEY = 'coreShippingTheme';
@@ -24,1175 +25,392 @@
       document.documentElement.setAttribute('data-theme', theme);
     })();
   </script>
-  <style>
-    :root {
-      --bg: #e9eff6;
-      --panel: #ffffff;
-      --panel-soft: #f6f9fc;
-      --border: #d7e0eb;
-      --border-strong: #c3cfde;
-      --text: #17314e;
-      --muted: #667b93;
-      --navy: #16355d;
-      --navy-2: #244873;
-      --gold: #caa25d;
-      --shadow: 0 18px 40px rgba(16, 40, 70, 0.12);
-      --shadow-soft: 0 8px 20px rgba(16, 40, 70, 0.08);
-      --radius: 22px;
-      --radius-sm: 14px;
-      --success: #166a52;
-    }
-
-    * { box-sizing: border-box; }
-
-    html {
-      color-scheme: light;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(22,53,93,0.08), transparent 22%),
-        linear-gradient(180deg, #edf2f7 0%, #e5edf6 100%);
-    }
-
-    .page {
-      width: 100%;
-      max-width: none;
-      margin: 0;
-      padding: 14px;
-    }
-
-
-    .top-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, #ffffff, #f6f9fc);
-      color: var(--navy);
-      text-decoration: none;
-      font-weight: 800;
-      box-shadow: var(--shadow-soft);
-    }
-
-    .hero {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 16px;
-      border-radius: 22px;
-      background: rgba(255,255,255,0.94);
-      border: 1px solid rgba(255,255,255,0.82);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-
-    .hero-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .logo-box {
-      width: 230px;
-      padding: 9px 11px;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #ffffff, #f6f9fc);
-      border: 1px solid var(--border);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
-      flex: 0 0 auto;
-    }
-
-    .logo-box img {
-      width: 100%;
-      display: block;
-    }
-
-    .hero-copy {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .hero-title-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      width: 100%;
-    }
-
-    .hero-copy h1 {
-      margin: 0;
-      font-size: clamp(1.9rem, 2.4vw, 2.5rem);
-      line-height: 1;
-      letter-spacing: -0.04em;
-    }
-
-    .hero-copy p {
-      display: none;
-    }
-
-    .hero-actions {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin-left: auto;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .theme-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #ffffff, #f6f9fc);
-      border: 1px solid var(--border);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
-      flex: 0 0 auto;
-      user-select: none;
-    }
-
-    .theme-toggle-label {
-      font-size: 0.82rem;
-      font-weight: 800;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .theme-switch {
-      position: relative;
-      width: 48px;
-      height: 28px;
-      display: inline-block;
-      flex: 0 0 auto;
-    }
-
-    .theme-switch input {
-      position: absolute;
-      opacity: 0;
-      inset: 0;
-      margin: 0;
-      cursor: pointer;
-    }
-
-    .theme-slider {
-      position: absolute;
-      inset: 0;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #d8e2ee, #c7d4e4);
-      transition: background 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: inset 0 1px 2px rgba(16, 40, 70, 0.12);
-    }
-
-    .theme-slider::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 2px 8px rgba(16, 40, 70, 0.18);
-      transition: transform 0.2s ease;
-    }
-
-    .theme-switch input:checked + .theme-slider {
-      background: linear-gradient(180deg, #3f5d85, #244873);
-    }
-
-    .theme-switch input:checked + .theme-slider::after {
-      transform: translateX(20px);
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(560px, 44%) minmax(720px, 56%);
-      gap: 14px;
-      align-items: start;
-    }
-
-    .workspace-column,
-    .preview-column {
-      min-width: 0;
-    }
-
-    .workspace-column {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .preview-column {
-      position: sticky;
-      top: 14px;
-      align-self: start;
-      height: calc(100dvh - 28px);
-      max-height: calc(100dvh - 28px);
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .panel {
-      background: rgba(255,255,255,0.94);
-      border: 1px solid rgba(255,255,255,0.82);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      backdrop-filter: blur(12px);
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(22,53,93,0.06), rgba(255,255,255,0.22));
-    }
-
-    .panel-header h2 { margin: 0; font-size: 1rem; }
-    .panel-header span { color: var(--muted); font-size: 0.84rem; }
-
-    .content { padding: 16px; }
-
-    .form-sections { display: grid; gap: 14px; }
-
-    .section {
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px;
-      background: linear-gradient(180deg, #ffffff, #f7f9fc);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
-    }
-
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .section-title h3 { margin: 0; font-size: 0.97rem; }
-
-    .section-tag {
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(22,53,93,0.05);
-      color: var(--muted);
-      font-size: 0.75rem;
-      font-weight: 800;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .full { grid-column: 1 / -1; }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      min-width: 0;
-    }
-
-    label {
-      font-size: 0.8rem;
-      font-weight: 800;
-      color: var(--muted);
-    }
-
-    input, select, textarea, button {
-      font: inherit;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      min-width: 0;
-      padding: 11px 12px;
-      border-radius: 13px;
-      border: 1px solid var(--border-strong);
-      background: #fff;
-      color: var(--text);
-      outline: none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    textarea {
-      min-height: 82px;
-      resize: vertical;
-      line-height: 1.45;
-    }
-
-    textarea.specs {
-      min-height: 170px;
-      font-size: 0.9rem;
-      white-space: pre-wrap;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--navy-2);
-      box-shadow: 0 0 0 4px rgba(36,72,115,0.1);
-    }
-
-    input::placeholder, textarea::placeholder {
-      color: #97a6b8;
-    }
-
-    .switch-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 0 2px;
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .switch-row input {
-      width: 17px;
-      height: 17px;
-      accent-color: var(--navy);
-    }
-
-    .muted-note {
-      color: var(--muted);
-      font-size: 0.76rem;
-      line-height: 1.5;
-    }
-
-    .section-subnote {
-      margin: 0 0 10px;
-      color: var(--muted);
-      font-size: 0.78rem;
-      line-height: 1.55;
-    }
-
-    .spec-check-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .spec-check-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, #ffffff, #f7f9fc);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .spec-check-item input {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--navy);
-      flex: 0 0 auto;
-    }
-
-    .spec-preview-box {
-      padding: 14px 16px;
-      min-height: 140px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: #fbfdff;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
-    }
-
-    .spec-preview-box pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.65;
-      font-size: 0.9rem;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .preview-panel {
-      position: relative;
-      height: 100%;
-      max-height: 100%;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .preview-panel .content {
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-      padding: 12px;
-    }
-
-    .status {
-      flex: 0 0 auto;
-      min-height: 1rem;
-      color: var(--success);
-      font-size: 0.8rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    button {
-      appearance: none;
-      border: 0;
-      padding: 10px 10px;
-      border-radius: 12px;
-      font-size: 0.85rem;
-      font-weight: 800;
-      line-height: 1.2;
-      cursor: pointer;
-      transition: transform 0.12s ease, box-shadow 0.16s ease, opacity 0.18s ease;
-      min-width: 0;
-      white-space: nowrap;
-    }
-
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
-
-    .primary {
-      color: #fff;
-      background: linear-gradient(180deg, var(--navy-2), var(--navy));
-      box-shadow: 0 10px 22px rgba(20, 52, 91, 0.18);
-    }
-
-    .secondary {
-      background: #fff;
-      color: var(--text);
-      border: 1px solid var(--border-strong);
-    }
-
-    .accent {
-      background: linear-gradient(180deg, #d8b46f, var(--gold));
-      color: #162b43;
-      box-shadow: 0 10px 18px rgba(191, 146, 69, 0.2);
-    }
-
-    .preview-shell {
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      overflow: hidden;
-      background: #fff;
-      box-shadow: var(--shadow-soft);
-      display: flex;
-      flex-direction: column;
-      flex: 1 1 auto;
-      min-height: 0;
-      height: 100%;
-    }
-
-    .subject-bar {
-      padding: 12px 14px;
-      background: linear-gradient(180deg, var(--navy-2), var(--navy));
-      color: #fff;
-    }
-
-    .subject-bar small {
-      display: block;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      opacity: 0.78;
-      font-size: 0.72rem;
-      margin-bottom: 6px;
-      font-weight: 800;
-    }
-
-    .subject-text {
-      font-size: 0.96rem;
-      font-weight: 800;
-      line-height: 1.5;
-    }
-
-    .mail-meta {
-      display: grid;
-      gap: 8px;
-      padding: 10px 14px 0;
-    }
-
-    .mail-meta-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(246,249,252,0.96), rgba(255,255,255,0.98));
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 0.88rem;
-    }
-
-    .mail-meta-row strong {
-      color: var(--navy);
-      min-width: 28px;
-    }
-
-    .preview-body {
-      margin: 10px 14px 14px;
-      min-height: 0;
-      flex: 1 1 auto;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 16px;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: #fbfdff;
-      color: #17314f;
-      -webkit-text-fill-color: #17314f;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.72;
-      font-size: 0.95rem;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      scrollbar-gutter: stable;
-      caret-color: transparent;
-    }
-
-    .preview-body,
-    .preview-body *,
-    .subject-text,
-    .mail-meta-row,
-    .mail-meta-row strong,
-    .panel-header h2,
-    .panel-header span,
-    .theme-toggle-label,
-    .section-title h3,
-    label {
-      -webkit-text-fill-color: currentColor;
-    }
-
-    .view-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
-    }
-
-    .view-toggle {
-      display: flex;
-      background: var(--panel-soft);
-      border: 1px solid var(--border-strong);
-      border-radius: 12px;
-      padding: 3px;
-      gap: 2px;
-      flex: 0 0 auto;
-    }
-
-    .vtab {
-      padding: 7px 18px;
-      border-radius: 9px;
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 800;
-      cursor: pointer;
-      transition: background 0.14s, color 0.14s, box-shadow 0.14s;
-    }
-
-    .vtab.active {
-      background: #fff;
-      color: var(--navy);
-      box-shadow: 0 2px 8px rgba(16,40,70,0.10);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      flex: 1 1 auto;
-      justify-content: flex-end;
-    }
-
-    .btn-group button {
-      padding: 8px 16px;
-      font-size: 0.84rem;
-    }
-
-    .html-preview-frame {
-      width: 100%;
-      height: 100%;
-      min-height: 0;
-      flex: 1 1 auto;
-      border: none;
-      border-radius: 16px;
-      background: #fff;
-      display: block;
-      overflow: hidden;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-
-    .html-preview-frame::-webkit-scrollbar {
-      width: 0;
-      height: 0;
-      display: none;
-    }
-
-    @media (max-width: 1260px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .preview-column {
-        position: static;
-        height: auto;
-        max-height: none;
-        min-height: 0;
-      }
-
-      .preview-panel {
-        height: auto;
-        max-height: none;
-      }
-
-      .preview-panel .content {
-        overflow: visible;
-      }
-
-      .preview-shell {
-        min-height: 560px;
-        height: auto;
-      }
-
-      .preview-body {
-        min-height: 480px;
-      }
-
-      .html-preview-frame {
-        height: 560px;
-        min-height: 560px;
-      }
-    }
-
-    @media (max-width: 860px) {
-      .page { padding: 12px; }
-      .hero { padding: 14px; }
-      .hero-left { flex-direction: column; align-items: flex-start; }
-      .hero-title-row { flex-direction: column; align-items: flex-start; }
-      .hero-actions { margin-left: 0; justify-content: flex-start; }
-      .logo-box { width: 100%; max-width: 330px; }
-      .grid, .grid-3, .spec-check-grid { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 640px) {
-      .html-preview-frame {
-        height: 500px;
-        min-height: 500px;
-      }
-    }
-
-    html[data-theme="dark"] {
-      color: #e5edf8;
-      background:
-        radial-gradient(circle at top left, rgba(90,125,170,0.14), transparent 24%),
-        linear-gradient(180deg, #0f1724 0%, #101c2b 100%);
-    }
-
-    html[data-theme="dark"] body {
-      background:
-        radial-gradient(circle at top left, rgba(90,125,170,0.14), transparent 24%),
-        linear-gradient(180deg, #0f1724 0%, #101c2b 100%);
-    }
-
-    html[data-theme="dark"] {
-      color-scheme: dark;
-    }
-
-    html[data-theme="dark"] .hero,
-    html[data-theme="dark"] .panel {
-      background: rgba(16, 24, 38, 0.94);
-      border-color: rgba(72, 94, 124, 0.9);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
-    }
-
-    html[data-theme="dark"] .section,
-    html[data-theme="dark"] .mail-meta-row,
-    html[data-theme="dark"] .preview-shell,
-    html[data-theme="dark"] .preview-body,
-    html[data-theme="dark"] .view-toggle,
-    html[data-theme="dark"] .theme-toggle {
-      background: linear-gradient(180deg, #162233, #131d2c);
-      border-color: #31445d;
-      box-shadow: none;
-    }
-
-    html[data-theme="dark"] .logo-box {
-      background: linear-gradient(180deg, #ffffff, #f6f9fc);
-      border-color: #d7e0eb;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
-    }
-
-    html[data-theme="dark"] .logo-box img {
-      filter: none;
-      opacity: 1;
-      mix-blend-mode: normal;
-    }
-
-    html[data-theme="dark"] .panel-header {
-      background: linear-gradient(180deg, rgba(51,74,106,0.34), rgba(17,27,41,0.2));
-      border-bottom-color: #31445d;
-    }
-
-    html[data-theme="dark"] .section-title h3,
-    html[data-theme="dark"] .panel-header h2,
-    html[data-theme="dark"] .hero-copy h1,
-    html[data-theme="dark"] .mail-meta-row strong,
-    html[data-theme="dark"] .subject-text,
-    html[data-theme="dark"] .preview-body,
-    html[data-theme="dark"] .theme-toggle-label,
-    html[data-theme="dark"] label {
-      color: #e5edf8;
-    }
-
-    html[data-theme="dark"] .section-tag,
-    html[data-theme="dark"] .panel-header span,
-    html[data-theme="dark"] .muted-note,
-    html[data-theme="dark"] .mail-meta-row,
-    html[data-theme="dark"] .vtab,
-    html[data-theme="dark"] .theme-toggle-label,
-    html[data-theme="dark"] .subject-bar small {
-      color: #9fb2ca;
-    }
-
-    html[data-theme="dark"] input,
-    html[data-theme="dark"] select,
-    html[data-theme="dark"] textarea {
-      background: #101926;
-      color: #e5edf8;
-      border-color: #31445d;
-      box-shadow: none;
-    }
-
-    html[data-theme="dark"] input::placeholder,
-    html[data-theme="dark"] textarea::placeholder {
-      color: #8095af;
-    }
-
-    html[data-theme="dark"] .spec-check-item {
-      background: linear-gradient(180deg, #1a2a3f, #152337);
-      border-color: #31445d;
-      color: #e5edf8;
-      box-shadow: none;
-    }
-
-    html[data-theme="dark"] .subject-bar {
-      background: linear-gradient(180deg, #1d385b, #142742);
-    }
-
-    html[data-theme="dark"] .preview-body {
-      background: #101926;
-      color: #dbe6f3;
-      -webkit-text-fill-color: #dbe6f3;
-    }
-
-    html[data-theme="dark"] .vtab.active,
-    html[data-theme="dark"] .secondary {
-      background: #1a2a3f;
-      color: #e5edf8;
-      border-color: #31445d;
-      box-shadow: none;
-    }
-
-    html[data-theme="dark"] .html-preview-frame {
-      background: #ffffff;
-    }
-  </style>
 </head>
-<body>
+<body class="generator-page">
   <div class="page">
     <div class="layout">
       <div class="workspace-column">
-    <div class="hero">
-      <div class="hero-left">
-        <div class="logo-box">
-          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA40AAACZCAYAAACL+98pAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAADjaADAAQAAAABAAAAmQAAAADdRo/0AAA/jUlEQVR4Ae2dT6wkR53n297eEWZn6Wc0Gh9GyG/gvv0QvruQ8NmPA1y7fMFHmhPc/LjBicdt4eLyFQ50nxlpqk8jrWzN673DlIXm4NUIv2Z2B4RG9H4/1ZntfNkRkX8q/9c3pKjMjIyM+MUnoyLjmxGZ+dLTp09v2X1G4Av/45urbOtUS3zRnWnjJAu41vKquFPru8zf+sP//tVW63YmYAImYAImYAImYAImYAImMGsCLx2jaJQwPNVZOyv4E62/Kd+He6REr+Wv5LfyOwnKnZZ2JmACJmACJmACJmACJmACJjB5AkchGiUSEYirgr8z8pn5WPnnInIrEcm6nQmYgAmYgAmYgAmYgAmYgAlMjsAiRaNE4olIn2d+peXYIlEmJN0T7X0gv2UpEXmtpV2HBFQn/qeSe1f+I/F9o8OknZQJmIAJmIAJmIAJmIAJLJrA7aWULhOKa5UHf1d+Tg5Rey/z76ssD7WOiLSAFISO3OeydBZT5zvi4mRMwARMwARMwARMwARMIElg9h1oCSxGFNfybydLOq+dlAV/qfIhHjcaHdtqaWcCJmACJmACJmACJmACJmACgxKYpWiUkDoVpXXmX9fyUMfLanYl3+gNqLLpRMefyeNW+99ny1Ott7Xx+Qik0uc5yAt5jz4Kgp0JmIAJmIAJmIAJmIAJmMAwBGb1TGMmFi+EhqmcbR0C8Up+y1IjeDste3eyfaVMEJUs8QjCNo7nHy/xfvaxPj7x3yg29eaxuOXivn4CjmkCJmACJmACJmACJmACR0pgFqLxQLHICN0Ded5SynISTmVCuKwyz1TUps7isQExi8YGsBzVBEzABEzABEzABEzABAoEJi0aDxCLj1XGjTxTOXdaTtqpnCcy8DzzTQWkxWONs2vRWAOSo5iACZiACZiACZiACZhAgMAkRWMmoi5k73cDNseC8hFFpm3uYpGmHl4QkPdl690G9lL++1MaTW1ge+9RLRp7R+wMTMAETMAETMAETMAEFkpgcqJRnfu1WF/K36nJnGcUebvopmb82UQTizMZi3hs8gwnPNZzFs59nCCLxj6oOk0TMAETMAETMAETMIFjIPDyVAqpTv2p/Fb2vC9fRzB+oHhflThaLVEwqmy3VK4r+bVW/17+h/JMRa1ybyrCv4jlRVVE7zcBEzABEzABEzABEzABEzCBKgKTEI0SOIymXckjeKocYvHvEVOIqqrIS9ivcu7kL1SWU/m64vE9cb2SP9MxdiZgAiZgAiZgAiZgAiZgAibQisCoolGCJh9d/ImsrxpdfKg4uVjctSrtzA+ScLzOxCNCEPFc5e4qwlac11URvd8ETMAETMAETMAETMAETMAEQgRGE40SMucyiJHCqtFF3oT6dYmlc/md1hfhMsHcahQQDvJrgfiq/KMKIIjx95XfRv6kIq53m4AJmIAJmIAJmIAJmIAJmMANAqO8CEfi5VJWfPeGJS9u8PzehcQRcWfjVDaE4Kl8vmT9RJ5RvzqOcl/JX2fLnZaIxK2WQac872vHhTwCMeUQ4GulRfpH5cRoowLfk3+s8p8dVeFdWBMwARMwARMwARMwARM4gMCgolEd9xPZ+kC+anSR0TPEzU7LSTuVaSUDc48YqRJuitLaIfq2uRef6zwl2XGq9Y18FVtEKaO2Wy2Pxlk0Hs2pdkFNwARMwARMwARMwAQ6JjCYaFSnHUG1kU+NuCFoJj26qHKcyMbzzL+t5ZjuoTJ/gM8FpOy7r+0L+Srx+o6O2SjeUTiLxqM4zS6kCZiACZiACZiACZhADwQGEY2ZYNzK/pSQYRRtss8tqgxr7JMfWyjKhKDbC0iEYMZ7o1h3gzE/C/yh4l98trncNYvG5Z5bl8wETMAETMAETMAETKBfAr2LRnXWVyoCo2EpwfhTiRdGyCblZPupDFrLY1vKfu2ejGO0dpP5Cy2rRO4HYr9WvEU7i8ZFn14XzgRMwARMwARMwARMoEcCvb49VR31tWz/R/mY4ELgME1yUoIRsZiJjH+Rfe8l7NeupPuj9n4s/7tsyTplLrs8Hvv/VZ7lJ+VINbdh/V35f87iP6o47l5W1opo3m0CJmACJmACJmACJmACJnCMBG73VehMML6fSB/xtJJgvErEGXQXYlEZXsjfk2/qPtUB/1f+r+VfzQ5+RcvXs/XUoioeovL38pyv11IJlfa9XdqObSIcbx3DiGMMgMNNwARMwARMwARMwARMwATCBHoRjTUE42OZM5nnF2Xviey5kGeEroljBDEXiQjFXCw2SaNOXETl3xUiIiL/Tf5v5NnXhbNw7IKi0zABEzABEzABEzABEzCBhRHofHqqBNiZGKVGGBGMjDDupsAyE7jYUlcwfqK4iDbcl+T7Eor7DCI/CEXyZokt2NSFQzje7yIhp2ECJmACJmACJmACJmACJrAMAp2ONGaCcZtAkwvG60ScQXbJ1lNltJF/U77KIcz+nzwje69VRR54P8IRj2P08b/J59uENXU/EZtrifpN0wMd3wRMwARMwARMwARMwARMYHkEOhtpzETYVojuRDBNSTAymnYlXyUYnygOghERhmCcusunq+Z2t7X3/ewGQNvjfZwJmIAJmIAJmIAJmIAJmMBCCHQy0iiBcSIeD+QnLRgzOzey8235lEMoviQfK0/q2Cnsy+3On3tsY9OlDlq1OdDHmIAJmIAJmIAJmIAJmIAJLIdAVyONGyG5G8EyiRHGbORsKxurBCOjdIwsfk5+7i4fHUU8NnVvitl504Mc3wRMwARMwARMwARMwARMYFkEDhaNEhb3hSQmxPjeIC+9uR4TWyZ+trIhJmwxLxdWd9hYmEM8/kn+PxqW61LsThoe4+gmYAImYAImYAImYAImYAILInCQaJSgWInFTyI8GLHjsxpjC8a17PiVfEwMIqQQVPmonFYX6Rg5/bw833us6/jG5KpuZMczARMwARMwARMwARMwARNYHoHWojEbgXqQQIJgvErs732XbLxQJqnPfzC6iJBawlRUFaOW+6Ji1RWO7+gcps5xrQwdyQRMwARMwARMwARMwARMYL4EDnkRzkbFjo3efU9iYzsmFglG7LuXsAHhtPTRxVjx/0tsRxbOKDHTikcV/RU2ercJmIAJmIAJmIAJmIAJmMAABFqJRgmytWx7O2LfQ4mNy8i+QYJrCEbejsqI27E5yv1UPib24TGJFxdhiJ0JmIAJmIAJmIAJmIAJmMD4BBpPT5UgO5HZMVHIi2/WYxZL9t1X/rERRkQTzzDydtRjc/lbYZmOG3MfaMfoLy6KGedwEzABEzABEzABEzABEzCB4Qm0GWncyMzYSNWoL77JRkB/EsGIYDxGsQgOpuJWjawypTh2M4A07EzABEzABEzABEzABEzABI6QQCPRKFF2Lkaxaak/HPMZONm2km2xl95YMMYrNyOQa527B/Eo3mMCJmACJmACJmACJmACJnCsBGqLRomyE0GKjUQ9lui4GAuibDtV3jHR01YwfqI0/yz/F3ncF+Rf3a89+yHd/5NtM82XeK9n21NZ8CmR1Agjzy8iGK+mYrDtMAETMAETMAETMAETMAETmBaB2qJRZt+Xj4mi9cjFQjDGpszWmZKKAOTzG38tnwvD17SecqQb4xFKL5VW1/vI/6l86vnFR9o/6nTirgvt9EzABEzABEzABEzABEzABLonUEs0ZqOMiMaQ++mYI1Wy7VJG3Q0ZpjDEU0w0su8P8q9lcb6kZVeOPIvpIUj5zEUuSLvKJ5TOEwXGBHQen3MWO595HC8XSkD/mW+oaF+Tpz4Wl+USf6SAT+V/m/mPVG/+oRxprtsFDl9WGfA5j3KRcg7Pl0viUC6st+dPQHWbusz/nHrNEpf/159tPfvN/8/P/+MK5n/O/97OBEzABExgRAJZW07bnbffLHF5u/5s69lv3p7nfZV/UFvOemfupadPGZBKOxm9UYx7gVgIlFMZdR3Y13uQ7DpXJr+KZIRQC32H8ROFM9U0JiYjyXUWTP4I1T5cnRfevKPztekj8ymnWajDTKU+m7KtXduWNTrfUro0MiwPdb9UAjROvxTL2XQuxYEONOXH5w2vVls7GOQc6HSP7lTG6ga9Oys59/kFCQ4w4CI1eJ0YuNyNCYrJS40PanhA9j//jg7ron5zXvO6nZ/jhha1i546l0NwrLJ6aPumlF8Vm5r783Yjv1HRece2jh0prnWOrxFn9HKmytjHfymVn3j9QHn+uAa3XqKkbOuDxSGFkK30T/L+2qF9Ferhvq+icv78ELs49nZVAjL+VHFCgpFD78uIsQTjifLfYETA8VmNsmDMxVpfgi1gRjAozz+3JxipRWCVYETg8zmNqxZp+5AZEtB/l0Yn70R2WYJceP1IeSAgf6x6NQnRFCqkbMwZwKNLR3p4ONAo/1wc4HEsLh/NorzP2YoFIgMWB1+gjgXkIeUUb87Dj+T5X7LehaOjgv++0ue/zX/c57MLsk6j2G7saWR1jPpFuzH4TaeeTsmxlLMuPq6Ti5qtVLfgdeJl7Tht+PflucHdlaMe7vtsyoPrRP4/a9Vne7mGVReROB/rz72J7Bsi+FKZ3IlkVCwXI464XKw926r3y3N/fLvwh5n/ppZfz/z3CuHEeyzfxOX2IB4PdXVeeMOIsAXjoaRncLwahm/I/1qm4mks+nI0Rgiy39AYybM9GSd7viP/Gxn0M/nnoqYnA0n/F+Qn3yfznszvNFnExs/E4ffy1A+7ngiILx0M6jic+/r/0YHhfLpuC4RdLwSoY3RoqWPU6aW6Yyln7PzRjvTVTsXynHx4oR2nr0Id6cvBfn/NUJ6t+my3U5Yp0VPtj40yrlPH9rlPdq2UfsyufFoqo40vy5dHHBUUdQ+1Z4uvIbCId8PJrhMFnMmfZ/71GxHCG4hHRN9f5FMvrgkd/UcFPq04DtE72ohwyGiH9UNA9S+/II0hWmiIEGnf1n+HUbfRnGxAtNAB6VsohsrIOUA8woDpOINO7QsZNGIYFyg6CQga6kWrO5sj2j/ZrMUUttTxIUV5sW6/6/M52eoxZ8P29Vr1m7abNmMpo47lc3Is5SyXmzYEYfTt8o5j3FY9p69GOw6XoV3eZ2MWSe1pwy9XWHkR2f9ImWwj+4YIvoxkkk9LRTgiwD4XiVcMZpTwHflXVSbeJnopf1WMUHddx13LIzgRaac67qvyP5V/Ip9y2Im9+ahoKm6+jzRfkU8Jze/JjrX8dX6Ql8skkDU+H6p0YwjGHOqrWvm1bKERHMUpbxpCOIwhGItlJv8PM3uK4ce4joiHBUu7AwmI4/5/pmSGFIxFq/O6PfZ/rGiT15dFIK9jS28zjqWcxdr5LbVhY7VdRTtGW6cNl0c8/0J+DMGYl51rCSOO3OhmvdLdjsVQAifadx7ZfxEJ7z1Ydq2Vyd1IRpTniXyd0UVG4C4kqHZa9uKUNuLzPj6z+0LrqdFH7EY4Vtlf5/lFxOIDpWW3cAKqWzQ+U2qEeQ6KhpDRiEHuFCs/GjwaYC7CU3I0yNi05LvmdXhzfhCOb6lOjDoSXcfYicehntftTOcvtOF/WB715j/KeWFJenXTVNT9cdwg4j/uZx0hYtc1Aeolndk3hrqOdF2AmukdSzmLOLgu8gKko5t9onLTztJna9Lewi5vw/PrZ7k9Jw5pUp/wTfpCDDbwWBPX51C62v3MIbJibq0ddwI7efvkNhDee5AKdKJMLhIZ/ZX24VOud7EYylzMNgrfqAxrLS/lQ2wVvBeMTDtlFDHkqgTjYx2EYLwKHeyw5RBQXZqqUAIyjdCXs0aIxq43l3Hg+c2mjXBvNpUSpvGmg02D3CuLUr5T3KQTWHlhmqLhU7BJ7BhJr+oMUMd+LM/bjWt3yrL/EWnj+f/SvlQ5ph/fUj4WjlWklrH/rQOLkd+kyOtZVXJ0fmnb36iK2PH+Yylnx9hqJ5f3XYY+r7UN7COi2kr6KNTnOm0rJtB+83I92vKkmCOyXC4o9xvKby8GtVGnPccm+inJR4xu71MO/9wPB+8FT2RX78HYlBqpSxnANFSmjY4qppQ/wvGBbLmQ/658yOWCsSweq154QxnPlcd1KFGHLYeA6tD+D64STVUoATtvIHu7MMyEw3MWsvfYhSP1FqFx7ByoE42cmNGBrpr6jXjjWdrGNyeyY/YdFOX1A6XD7AVEalUHp7YwVVp2MyagOnKjU3pAUX6sOka9qlPHvqa431fe3AgZxB1LOQeBGc+E8/ojsaatWbxTWfP+UFV7Cgv+ZwjFg27G6fhie45w5PqRyp99yRkkLyvCC06FWykwJM7GfmMqorGN49m+lfyogjE3XHbw7CNl+br8x3l4YIl4ZLoq4hH3uWeL4O9PszJaMAbxLCdQ/8/9H1slmrJgzIFzYWAqRuduZhwo//6ikdndOY8ZJQgHOot2zQgg4FKOqaKdTAlXOp/K00n/inyqs45A7UpIpMrmfQsjUKhj3FSsGkXhkYdUZ3eydI6lnC1PAOeVUedFO5Vxf+1XIavqMDfgaMO5qXqQYCwCzeog6dGe1xHp3NgNnpegaFSia/mQ24QChwhTAdbK507DvBBkXxWwy4bHDRJddm2V0Zn8w0SGf6N9iMeUe0dpIULtjoMAd4u6Fox0/Mq+K5q8VbUPkdDk2a46ZWF0psyA7cajNonMOG/Yfexutp3AMU6c/j+MMqb+Q718RzHrbNDJoGNfHlHkm3opQTkGKuc5MwKqQ7+Vp37R1sYcne1U/Y8dN5nwYylnC+C1X8LSIu3RD1HbTd3lml8lGBkV5PndzsRiufBKO78ZWHWjhps4wX7PC9NTVcATRb5Xzizb3kTChwi+aJjJLKZq6iReq1zn4k753mtYxieKP5kR1Ia2O3oLAqonXDi7uHhygaaRSj6MrvwQOdxxIk86rm1dpw++yy5GXYJ3whoYSKO4Z6AlHIKNJOkpP8pOfvA4lD8PnA863Uo2x1ybZ3e4+MGD6S5tb16QBhzHEh1tyi1zR3Opuk6nu87d49bGK/2PVGfpaOTPDtOp6DXP1sb6wLkS4DMMvPk6dp2hzR+rveiS6bGUsy4zrgXMRlrqZzgoW6xO54yYsTFY3c7ac66BiNnitYU+UPITHLdziwvL88J6cfWhMtoVA4Za18VqpbxC02VjJnwgW9exnVMMl70XKiem1RWOjxWX5xd3HGS3fAKqHzQ8h0715C4WjUJ51CAIUPHoHOJ5BoVOPhfuqgZQUV5w+YXh4M667KCRY7S1rds3jDqYkZKoUCwmnvHa3wFU/nSWcxaUq41DRH+kdFN319uk2+iYA/OnTuR1snjhqWvDaKLxwHLXLV+X8VJ8e7szXSyAmH2q8513NFo9N1lMz+smUCSQ1a93FcaNiZDjMwXfmOF/90ZZjqWcNwr9bANRFJtiz2c4pnIjNWB6uyDKpCO5uZpyo7yBmnooo96Sjdyo4eYvN9Bp15N9w5cVqexionFTjjjg9rpBXrMTjHnZdLIutP5Bvp1YEocRxl0ijnctj8AhghHhx9QHGqhkoxDDpuMQWXXnxIeSYYStqgENHVcOO0Qw0jB+ReVAONcSjOXMOY7jFc7IC+m1dYeUo22enR4nDoxyISTa3CXl7bptRyo7LccMEkvdqBnsxkNW9/322xlUmDmaqPpFXeZaFXOLaC+OpZzFk6gyc7M1dW65kbqI80u5VRZuKMdEMlFwowjGZ1k//+X6zRtT8ZV9wxuiUYVkaurbz5P6bOWJEnvw2eZwa5lNMSFbNmS2gjEviDivtZ4Sjj8kjvx1foyXyyeg/wGjMqnRhhQERiI66+ip7iEQaGiaiC46A9hwiMiiIaYRbnthoYHu7HuJSgvBxJSattP0eEkQ53X2Thxg0Obctq3Ts2fWsADROi/2qY5Yw2wc3QRGJ5BqR5bUXhxLOYsVipHkVL+BF7C0nb1TzGcK69wUTpWFm/CDzBJJwZAN3ARP1cUbh98QjdqzurH3s41RBGOWPYLxzmemRNeYPruO7p3RjqwcZeH4REX4pvZdzKgoNrU7AlV3rGI50TAhllINdezYaLjS24tARahKNxeLCEbWD3VtRVZvd/RULkQ0F8M2ru15bZNX38dUdQhC+UfFUCiyw0zABBZPIHUTJNUJnxuYYynn8/OiayVlTs1K4Xow+2uihC8zQ1J9FUb02t5s1qHjubJojI3ojS0aqwg9VoR1VaQ57defi/J8L7P5Yy2ZjjrmechM8WJoAtloFI1QU7cXjE0Pqhs/uwDEGr6uxSKjjDTCbTj0JhhzVmLBHcMYizxaaMkUzdTFJXTMJMPEgBsIte9YZoVYUidwlPOSdVBGyduZmkDXBNSOpG4uLuYm07GUs1w/VG5EY+o6wZu1u3iMpZz1kNtV9nd+I3+owpVF4yqUsU7ymGLl7ZBNhbAnWl/kdE1xv1TZ6FSdaf2qUGavHheBNqKCl6y0Hf2qTVd5IJaKdw7zqbBdjSwWbWnD4eAP5BYNSK2LRdXFMHZ4m3LF0ho7PHX3PGTbkqabhcrXVVjqWZOqDkpXNjgdEzABE+iCQNWslLlPU02NltInSd0Y6YJvb2k8F41S9qfKJfSG0oe95V6RsGw6r4jC7gudgMUKKpXtGl+Dg6MskEA2itDm7mrvgrGAG7GEWOQFM9xB67xBFAcYNOXAyNeQHJTdPr+qKbvEKzqebWxatuLxU1pPiZsp2Tk3W1Jc/c3LuZ1N22sCR0xAfQSukalPbDBYMsvvGetazk087I+54k32WJzJhj8XjbJwFbFyGwkfInhVkckjVb7LijjebQJzJtBmFIE3gzYd8WnNiAuAPGIx1bFtnX52YFsOTQXcQXbCQgm0uSi0Kd9BtvrgWRFI3Yihg/JrdVZSHZVZFdbGHi+BihtofV5jBoV+LOWMQdW1kjYtda3cf884dvyEw1OzZ/ge9GB9sz4YzV00rvuA4jRNYEIE2oiJVEM8oaI1MiXVEIcSyj+LEdrXa5guCvBvKlablq/XMhyQuIXLAfASh6aeAeIwRqo/VEd0KfUogcK7Fk4gNetiMaJR5/BYyhmtrrpW8h6AlIia42c4Un22qnY8ymoqO4qi8SxgFJ/aGGXqpy5+J7LnbsCmPIjPa+zyDS9NYGkE9B+gA566sISKzMtvmgqWUDqTCWvLYeQCMF23iWOK6hIEV1PRkhpBa8Jv0XH1n6azXMXqy4rDiCO+6XlYND8XblYEUnU3JTBmVUgZeyzlrDovVc83/mIu10bZSRucuo4vSjSGBNoogjGrYSERW6x894sbXjeBBRJIXVRixa3qWMaOm3J4Gw5jN85t8m9Tzsmct+zCnrrLOhlbZ2pI3RkE1COE42/ked6RjoydCUyeQFZXU23IIkTjsZSzToXTDTHOaerN47RffPNwDi51DWdq6uxv6N/mLKgCryJnYxsJHyJ4lciEUcbrxH7vMoElEGja2Wv0kdYZAWrK4bfZhWi0IpK/2lUuEKm7jmX7mpazfPzY21UfMw7ZN8pNDp2bpyFjegrr5E3CqlP/ILvpXNXtQOWdLaZ4MVLJjQzeqtzmhkZPaJysCdwg8LMbWzc3lnR9O5Zy3jyDkS21ST9XG4Xgit0w+I72I7qm3nalrveLuOGxF406UaeRcznVkcaLiL0ONoElEWgqIhbRKAVO4Fw5IIhiF8FAMVt9gzKUzuBhuqDzivE2nw5Zap3t5Ryo0/Rjseb/0JQ1x+xfA6/jsY26iUdEjiLcMaKpk+2pO/lNk3P8CRHI2pDU+Z26YKhF81jKWQvGzUhMU+VxnNj1ns9w0F5N+bnWVP1dxLVuyqLx9GZ9er7FG1N3z7e8YgLLJRBrPGMlnk3nL1aASHhTDlNpnLFj0aJRF3HODSNfTcqZn2ZGDpZaZ/Mydr4Us3fFnXSbCseiLXRu9h0cpcWIOOdh7yfeKft1sRBeXwYB1UHakNS37Sho3enZk4VyLOVscwLU7nwqPgjH2H+cUTw+w/FGm/QncMzsp6bCMBeNqxBQncRdKHygsLuRfDaRcAebwNIINBVLi2iUAicxNeUjEL3xm0tDaXQRNvnzoYv0Xji0KCx3hPFtxGKe3SJGDvLCDLnMhCMij2luTf8fZVM5nvO4P5eqE9zs4NzwEeop39WXiXZzJpC1PwhG2pKU4zNSs62Lx1LO1Amss0/nuGoKPi+M+77iTfUGQqoeT+Vmdp1TEY2Ti8ZQhEehwCHCVClSL8F5MIQNzsMEJkCgqWic7UW1gnWqIQ4dOhUOTe1oK+BCDOqGxe7q1j3+kHhTvfAfUqbBjlXH6Ze6ViIcGaGpGqVpYhf/NzzPQiIeeSMz+diZwEEEVJ+4QZHXL25S1GnbaUdn1VYcSzkPqgyRgxGE4peqG7RLU51WH72Bp3JN/iZy5JTcCM5F45s3Qp9tjPmimZOAPQQ9Fvgx7YqY5WATMAETMIEGBGY9ctCgnL1GzToiP1Anik4101XxTW82pWzcj0AqfUQj58ziMUVr4ftUD4Z8gRQ06Wh/e+gO97GUc8LV9duy7UP5mAjj+cY3hq4XU+A1ZN0U35fKZX65HFDYviqsD716FsnwQSTcwSZgAiZgAvMgMLuRg6ljpfMkj6j7imx9S57vhHZ5Z5tRcD7jQWct1pFTFDsT6IwA9Zc3Dy9iWl+CyrGUM4Hg5i6dc64RVZ/hSL2B9maC3uqMwMu6AJx2llp3CZ1EktpGwh1sAiZgAiYwfQKjjBxMH0t3FqrDxavp35X/olLlpRF0vroaIWQk80P1G+pMK1RUOxNoRQDRcAyC8VjK2bgSqP3ixlfqufdvqR3qclp+YxuP8QCmp55GCr6NhI8ZfDVm5s7bBAYmwAWlyVSzJnEHLspB2XGnuUkndSocmtrRVcf+INg9H4yYWfrIQc8I6yefsYY3zwkxQsiIIf+lfKnVxo56zajj4J16leeF6VKNrT/wAJV76CmaB1o8u8MRCz/Que5ypHyKEI6lnIewr/oMx/f1f+Qm2VSuKdE+m+z8suxk/6wdonGKbhUySsCvQ+EOM4GFEog2QJHyLnXaWNPOw1Q4TMWOSHUZNNhTsAbF/WJmWSd8/1ZU9qoTQ/3kmUUEJL5JfSUuwpHnimbfEVJZ7MYnsB9ZUn1a+s2zYynnwTWKNkttTNVnOJimOpXPcKT6bNxsm31bOVXRGKpso73NNWSMw0xgAAJNGxg6frN6y1xNhk05NBmVrGlCq2hN7WhazlZGjXAQncDBX2ZRUU6e+xvKTeUu+I3yZiKSDiweEZkLyLrff0Q40mEbkiWm2i2DAO0d/w3aBz7v0vTm4FwoHEs5ezkf3ERQ28QUez7NEnJ8huNHipd6BjJ0XB9hqWs4/YHZ3xBJicZznYhVH1RrpHlaI85RR9G5gdF6BhB2+jNvZmDnFE1MNUAhe5uKlFAaUwybKwdEfBPXtJxN0h4jLhfISb5xk47IGECmnKeY7Echsw4awpHnhapGH7+h+N/RsXvhOeXy2bZOCHRxg4CXNk3yRkqB0LGUs1Dk6a6qvlR9hiOfpjp2u566hjd9XCV2Qrqom8W0G312C9F4Vjy6sP7dwrpXp0fgVCa9Nz2zXrCIEeLNC6EOqEMg1QCFjn9VHbhvZZ2/0P65hjXl8GVx+NqYHRPyF+yqDnf5fDQtZ/n4KWwzWsBo95SeM5kCl9nYoP/N/hyqDiMEGUlkBDLlEJcWjSlCC9mnujF2p3wQksdSzkFgdpdJ1Wc4fqE26ytZ+9Vdrs1SSl3Dm95EDubcdd0Us2A+scCXteMktnNi4VcTs8fmmEDfBNpcoDtpmPouWMP023Co6ug2NKFx9Db5tylnY8N6PgChbMHYM+QhkqfzJU9HjWeKUm5/kyYVwftMwARM4BACaosQZKkpqFx7fnFIHh0cm7qG0052NdrYgantkkA0zsVdz8XQgeyci9gfCMfysqHTplI1ncbzHTVMTUe4Jg2vLYexCpXxr/tcWG7mR1k58+1BlsrzpZSXEXy2gXrYxMWePWmShuNOhIDqB6OIqc4ali7xZtVEzoDNMAETgEDWFqU+w8F0+dE+wyH7qvpsTfsFkzvxiMa5iLGzydEb1yDzGJf/ULmnGsiYDaM1mjGDOghP3cELJc9U3bE4cGFoKtybli9U5s7Dsotg05crceFuM9Lauf1OsBsCqgfUgd6nXnVjrVMxARNYMAFmPqTaoh/p+jPm+x1S1/LZXxcRjVczqVwnM7FziWY+UaF4NrHKL7HsY5eplWgcstFUXgi0n8n3OfWiLYem4u2g8w0LJdBGrLYp30G2NjiYkabGo40ZiwbZOOrECaRuHvT53584FptnAiYwFIHsRmbVlHn6I4Ne+wvlT13LmaI669FGXoQzRfeJjHptioZNyKbUSOPXy3bqj7Yth3W9rT9D6KPHu67zOab0dN5+K65MUW1652zIbxchkmgImRrLXbbO35gpDh8pbe4uNumcctGAA89lDeXIr+nFiqmpTachD1UepgTxrSymJ1K2uo7zRJ1ICY26aTneNAik7qA3+V9OozS2wgRMYJYEdE2q/AyHCka/pGpafeflz/oqqT4bds32xWEvd06smwT/HEgmJZIC0RcfdBoroSrttuxjcQcI3w2Qx9KzaNPA8O2iJp38VgyVB9MtaARzx7NNfPQb3/VzTm0EyLdkR9G+3M7Ol1k+baaftDm/ndufSlDtCTampgSFDmeakMVEiMwMw1QHmp7/GZbSJpuACcyBgNoj+gOpm618hqPN9biL4qeu6Yw2DtIn6aIg5TSmKhr/UjZU23cCYcccdHdKhdefwNOHezohLTvsWMPIX2/CUWkz+hlLvygeO2m4D+CAeOl1SkiWfpsXwPw2K1dPtafTZNvctY3Vj04Nc2ImYAImYAJHR4BZRKlHJ/p+bCYIvEZfBUHbdPZYMK+hAxGNu6EzrZHf34biCPIqFH5sYeIwxVHXKdq0pKrRZpSN8u+Fo+pM0ymTSXZZg8dHYavSRTzy/aTfyHch3FJ38FI2c/Ho5e5elm5bcdT2vKbK2ss+XQh5ViM1RTGUr1+KE6LSMkx1rer/1jLl6sOUd2rUOHXHvzpxxzABEzCBhgR0TWL2Q+pmJu1l22tzQ2teiJ66tu/tGrM9f8HamgEvC/ouEjel3iOHdBb8SiQlC5NnYObEYRs5lw5uQCC7c9W0w57ngFhjumgnd7aUDuLrQ/kmHVg6nAi3g0YdxYGGuG0HlRFHBGwTu5Vd2CkdppnwXag2I4wkyrOMbUVw2Kj+Q1MXwljubfnE0jvKcNU1bsB82FX9bQExNd18zP5Ci6L4EBMwgSUQyK6hqZfPjPIZjsyuVF+F/tjsro2p6al/mGCFmpNY6hPfqs/EW6Z92vI4H1afQNUbw1Ip0UDR4Ww9XYNOq/xvlE7bho6Pvqca95T9xX2pO4vFeKF1RCujnkwPaSUeOY7jlQ7C+RARfEg5QmXrPUznjxsXTc/hrJ/h6B1qjQxU37jpwg0Klp3dAKqRdTFKqq63vaFVTN/rJmACJtCGQOVnONok2sExVX22Xh8hqrK/TR/odpYon1J4s5RBSlCWovay+a9K9e9KKa9K28e6eZ4o+OPEvj53nUYS30XCHdyQgDrsvEmVRuiQ6RaMOuZvOd1PNyTdmCnKD7HJCAPH0WFt6xiJqGpAa6WNcJFdCK624hWxyLGMPDLSR4cXQRsdLVE8yg4HfKrzrN213A8oR62Y04sE+6YMEOm/TNW1IYspW3qZqhwrg8rdZoS2mByCMb/JwX8S4fiW0k3dyS4ef9C68srrfiydudblWHkcbgImMBMCagd5wzf9Cx6ZmYyjfZZdVX0V+mPYTJ8g2gfpulDKk+tJY163E4aEXkaTiN75rpBtr6ugZwJ71XluM0mQ8svUOwlzrxP7+tx1Gkpc52oXCndYOwLi+XPVATqNhz4f+LwTqPQwJtTpI05X7l3ZHhWnTTNRWj+W3c/L0PT4Qvy9iGZb6dFghzrh8M477EQ91CFQDxURh9rQ+njOo1hhfxPhBT+E+pCfP0mVse0Nh1SaqX2tz7dYYyt1sOjgycwBOhqt0y4mGFtXHuSVulHFy5xC/5tYkg43ARMwgU4JqA069GZyp/bkidE+qw2l/U7daKUfwhvv6Sf13pYqH2yhTW/cr8lHE7c6uOyCL6MpR+px+7VI2qlRtsghiwpeT7Q0pwG7HgfCHHQ4Ae5cdd2w5AKsuDzc0mcp8N3GplMa6+SNAOmSAw1osfz5euOGNWE89k5FOCXMrNyFUGl6V5TPn8DUriaB7OKeEueMliMee+GqdBlh5250apbB3J7LrUnf0UzABOZEAIEme7vsE3RVfEZBq+xCWNKWt350pspY2nN5Zq0UZ67EDgvam4vGXeCoVwJhQwf9MZDhOhB2TEFVonk3Eozy9GbMGGvUcyQEw2SrhpHO+lvywT/1MFbUzuXnsheR27mbGQfKz/liSmFTsdU5u0MTzMrQZoQrNWJ1qFlLPL7ODQs6G0xXxXcmHpUWd795brc8ylnkzOwBi8YiEa+bgAmMSYCbspO6xjbsqzCzBPHItNU67X8la6WDWOTayzspUiOeeVr7vkq+UVymRGMx3ljroZfxMEV1NZZBY+arciMYX6+wYVexv/Pdsus0kug2Eu7gAwkUGqHQtNIDU+/scARjJ88xxiwqcJi6gF6MYCycC8RC0ynHfilOAWDVquo3jOv+hxCMCMf8RU8psRfMWsfykic6K3Qu6kxfGvQ5nKDRDjQBEzCBjIDaTK5JvdyoPgRyw74KMzv2Ik9tcau3zus4rrW05cwUoT2v+0gTs8KiN7dva+ctFWarhFktu08UEJsmWo7bx3Ys7/vKbNtHhhNPk3JXuV1VhB72n0XSvIqEO7gDAnkjpP8ujUvdBqGDnGsl0btgzK2Agxgw8sqUi85GWvL0O1gi7L+dna8OkptGEhl3Rhupf03cpF6K08TwMeKKM88xc+e8jojDRDoc+2c2s+Oof/lNlXxJPBx3sonPkv9OE6HZ17RzmWFnAiZgAu0IZG0m7VmdUbV2mbQ4Krtm0lehLa9jG+0yfbv8ZTl5W871INaW04bTpjdpyxV972jTk4J7LxqzyI+1vJut54s/5ysjLv9def/3Uv5v62J4qsLtSuGL3VR5VypcaApoucy7csAA2xaNA0COZaH/wbuqHzQmdTuVsaS6Cu/95RxlQ2mMFfaWOPD8177DXI4z0vbgLIYsp7gjaGDORaqu40LIMXVH0Oqmu9h44vxLceYOOjdGmrKmc1Kng9KEX2/TzpsY4bgmYAImECHA9SUXUJEowwdnfZVvZ9dNroNcD+s6hDC+a0f/iZfwVL574uVCzqFRob8u7B9rtShsizZcFjeOYP2iZhlD57Hmoa2jrQJHPlEF3AXCHdQDgezP/oaSrvzT95B9niSd2jdkS5tn3fI0DlpmecMBET2mI/9RWQxY+DbijzunfVz8Biz2sFmpbnNnmbo92v8rKzE3Qtqc82GBOTcTMIGjJaA2ai+Epgog66sw6jh2X4VHIL4ie2r1HatEYxMF3Ne5eUUJPwkkzmjjKhC+uKCsnHVGGT/Wib8eAUDItu0Idhx1ljr3vPqeh8CHbohonJnSgEgqT5kY/JxggzwM6Ng2febuUHvJj6mog31D71CDDz1eZeWi1+bCN6UR4UMxDHK8WH8qz39t6P845aNuU6/HFq3YYmcCJmACSQLZtSk53TKZQM87ZV/eV6HfNnRfhWs27TkjjPTharmiaNxGjvhjJHzI4L+KZHYso42bSPnLwYOPMiaE++C2lGEc6zYNpTydSnytu0ctWeVikbtUzIWv3fC0zK/RYbKHKXRf0UGIxzaipkl+pI9YrH3HrkniM4jbRkjwXSqm59g1JKB6VvyPc6e4T0dnhtFF6nbf/6M+y+G0TcAEjoyA2iyuTaPfzE5hl42/pH1VHMRjn20sfTSuF4hFfOO8notGHUwnPzSi928KH9vFRhvvqtNxMbZxfeafla/qjam5Cdt8ZcDleSSvB5FwBw9EgAZBnkboi/IIp64EJOmQ3iTFouy64cQA8YiAplHmrmNXFxAaXNKDAw1wV3yV5Lycyg6LNuKlt29SzYtgO2vhLs9/sfgf7+LmTd65yG+EtLkp0K5QPsoETMAEuiVAP6iLdrFbq0qp0YeQL/ZVGou6UpL5ZrHPxshi63Rfevr0aZ7oLQkUOvpvPw94tsJII6Jtyu7rgrCdsoFtbNP5ONNx/9zg2ME5yMYr2Xe3ZCPPM56UwkbdlJ0bGXBP/rFsg+vROrHgWTIeEGf6eXFZZoK4oqFlpAHPVIrWjY2On5QrcPiyDCv6sp05h+fLJXEoF9bb8yegus3/mv95/h+nUPl/nfWiy//T1O/8f866nQmYgAmYwMgECn2VYnseeidAsS2n78ZNxU7b8rJoXCuT90fmk8qeUc+/CURghJS3qV4H9s0ySJUE0XUlX3eUcXChJhtPZd+/yJfdQ52L83LgmNuydaP8LRrHPAnO2wRMwARMwARMwARMYJYEnk9Pzax/ECnF7yLhQwcjGP8UyPSOwvjW5Elg31yDtjK8rmCkjMQf2sWEYaweDW2f8zMBEzABEzABEzABEzABEziQwA3RmI3UPQ6kGRrdC0QbJOgvkVyYIrkIsZKNilGekPvPUKDCxij7ekK2RExxsAmYgAmYgAmYgAmYgAmYwCEEbojGLKFNIEGeaZzCW1Qx7fPysZfzvIngmvOIYyYYmUYZcr9X4L+HdihsGwnvJVh2nirhkLBlaup1L5k6URMwARMwARMwARMwARMwgcEJhERjbMTqD4NbF8+Qkc+YcERwzW6qKkK3hmDkDXk8CFt2jyTUduXAnrfXkfRj9ScS3cEmYAImYAImYAImYAImYAJTJvCCaMzER2iK6msTKwjCkZG3kGMEDOF4Fto5tTAEI/bKx0YYedEPgvET+ZDbhAJ7DltH0rdojIBxsAmYgAmYgAmYgAmYgAnMkcALojErxGWkMDHREoneezBCqko4rnu34oAMJBhXOnwnH5rqqeD9tOA7rMh94dnihd9BhZpsPpcFoZf0fOCpqS+cGweYgAmYgAmYgAmYgAmYwKwJxEQjIoTRrbKb2mgj9qWEI2LrfYmcB9loXrk8o27LpgsZ8I/yuSgs21P8Ribng2dLy24MoXa/bES2vYmEO9gETMAETMAETMAETMAETGCmBIKiMRstio1ehcTk2MVPCUdse1t+J5EWEzuD2i87VvI7ZfpeImM+LVIUiX8ViXsZCe8lWHafKeE3A4l/rHqzDYQ7yARMwARMwARMwARMwARMYMYEgqIxK09MjMTEy9gYqoQjo3k/QazJr8cwVvkiFrfKm9HF1xM2MOX2c4X9xRHHQvAtXoBzVQwYYP1+JI9YfYlEd7AJmIAJmIAJmIAJmIAJmMAcCERFYyZGHgUKwejXJ4HwKQQhHBmhSznEGlNWEY8X8qepyF3sUx7n8lulhVh8syJNBCPlKLqXihuF9YvCeu+rGat7gYwYfd4Ewh1kAiZgAiZgAiZgAiZgAiYwcwK3K+xn9Cgkcl6rOG7M3fkIHZ/k4A2rMfe6dryHlxh6qOUD+a3E8k7Lg53SXCmRc/m1fOyZRe167v5Da4jDsmBEkIWOZ5Rxq31DuotIZpey5Tqyz8EmYAImYAImYAImYAImYAIzJpAUjRICvEDmY5UPgVV2VaKsHH/obQRjTHCVbeGZR/wtlfexFldFXyWIdMyZ4p/IrzLPdkjoKTjoUiz/a/CIW7cuIuG9BGci+F4gcRhfBsIdZAImYAImYAImYAImYAImsAACSdGYle9Cy/cDZUWUMTr2+cC+qQTlwo3ptHVHR+8qLv65QJJgojyIoytWModIJN4hjjQRhbER0ZiYnNIo46ZKVB8CyMeagAmYgAmYgAmYgAmYgAmMSyD6TGNulgTBRuuMNoZc5fGhg0YIywXj7w7IGwH6ZsEfIhg/VTo8e0maMdGNII+JyfvaN5iTaD5XZpS97BC9F+VAb5uACZiACZiACZiACZiACSyHQF3RFxMpPD/IaNhc3JcyQxl5/OMIRsOKfF+Vz5+9jJkROzcfSMhfxQ7qOlyC8URpXkbS9bOMETAONgETMAETMAETMAETMIGlEIgJkxvlk0h5oIBHNwI/22A0bAwB9pkFzdcYeXwls/uQ0cc6OTOqmAtrWJFvlbtWhJCoZGTvftXBHe8nv9cDaWLLZSDcQSZgAiZgAiZgAiZgAiZgAgsiUEs0ZuW9SJT7aWLflHch4PLRR+z8V/nYVFz213EIaIQoYhHHqGJsmuk+QumHaasnpbB8cz3k84MaZTxTxu/lmZeW94e0pZS3N03ABEzABEzABEzABEzABAYiUFs0SiBsZdMHEbt4Li8fTYtEmUXw38nK8qga4g8hiUcM5uu/LawXR1pzIYpYbONCI4yk8zAb8W2TZttjNpEDH8uW2L7IIQ42ARMwARMwARMwARMwAROYI4E6b08tloupiufyvMCl7BhNQzg2GVUrpzHFbcRfWwHYtDyIz9D0VYTqumlih8TXKOOFjr8bSWMdCXewCZiACZiACZiACZiACZjAwgjUHmmk3Nl0xIsEAwTj7xP7vStOAMEdEowccZ6xjx/d4R4JxpWSi01L/alsueowOydlAiZgAiZgAiZgAiZgAiYwYQKNRCPlkGC41OJRokxf1L4nif3e9SIBhHZshPadIUVa9rbUBy+auA9hxPMiss/BJmACJmACJmACJmACJmACCyTQWDRmDNZapoQh01eLz/llh3kRIIBgRGiHHJ/X2IR29Bi2Vdqh6cdkOeiLeMjQzgRMwARMwARMwARMwARMYFwCrUSjhMxOZl9UmM5USwvHNKSUYHwkzuv04d3u1SjjRinGnmP8oezZdpujUzMBEzABEzABEzABEzABE5g6gVaikUJJQDBN9WFFARGOfsYxDCklGB/rkPPwYf2ESjCulfK9SOq8LfUiss/BJmACJmACJmACJmACJmACCybQWjRmTNZa8pxbyjH10sLxJiFGYGNTUhGMK4m065uH9LclwYhAfT+SA9OQBxWwETscbAImYAImYAImYAImYAImMAKBg0RjJmzqCAoLx2cnF7H4H/Kxt6SOIRjPZM9GPuZ4c+suttPhJmACJmACJmACJmACJmACyyZwkGgEjQTFlRbv1MCEcMxFU43oi4vCaCti8fORko0lGLeyJ/bim+/p/LLfzgRMwARMwARMwARMwARM4EgJHCwa4SZhsdHiA9YrXC6a+CbhMTnKG5uOCodH8kNPSWWEcSsfE4y8ufVS++1MwARMwARMwARMwARMwASOmEAnohF+EhhrLR6yXsPxTUKelVu6y8sY+wYj5UecTU0wDv7m1qVXBJfPBEzABEzABEzABEzABOZKoDPRmAFYa8k0yzouH+H6pE7kmcXhuUUEY17GmPlM/1zHdvYRrpfeVI0wcv7O+8jbaZqACZiACZiACZiACZiACcyPQKeiUQLoWghW8nWFI8Rek89FFttzd4hgnltMCUYE5dfFa9Dpn9lnNbYJ2zhvg456Kj87EzABEzABEzABEzABEzCBCRPoVDRSzpbCMRdZvCgHQTVHl4+YIoJT7qF2norTNhWp632ZYOSzGjExa8HYNXSnZwImYAImYAImYAImYAILINC5aIRJJhzXWq36hiPRi+4VbSBqEI+5CCvun9p60c4qsYgY/qbY8AkLRmQHcxKMG2UW+w4jdlgwQsHOBEzABEzABEzABEzABEzgBQK9iEZykTC60uJMHkHS1CEecxHGm0cRZ1NyuU1FO1P28WZZRhcfpCJ1vU9i8USe83AvkbYFYwKOd5mACZiACZiACZiACZjAsRPoTTQCNhtRW2m1jXAkCRxvHkWc4X4n/+l+bfgfhGKed9GmlCWUm2cX1xmLVNxO90ksrpTgTv6ufMxZMMbIONwETMAETMAETMAETMAETGBPoFfRSA4dCcf8dH1JK69mGwg4RGRfo5BMjy2mj1DM89Zq0jEt9x2V/Ux+m4zZw04Jxksl+4/ydxLJP9S+1dBiNmGPd5mACZiACZiACZiACZiACUyQwO0hbMqEyZnEzEb5paZKNjEHAVcWcQi9/8w8aX1BvhyH8NwR/0/yiOe/yP+t/CvyuHx67LOter+IxQuVd1MverexxJfpwOSdGl0k05/Kxvus2JmACZiACZiACZiACZiACZhAisAgojE3QEJlLWHDM3Y/ycM6XjYVek3jx8xl1O5S5dvGIvQZLqYnSh8R+F6NfBgB3dSI5ygmYAImYAImYAImYAImYAImcGtQ0QhvCZbLTDg+0GZq+uTUTw+jipfyD1Sm3VjGiuVKeW/kX5dPOezlza1XqUjeZwImYAImYAImYAImYAImYAJFAoOLRjKXcNlK7JxpdSP/pnwd90SRruWrxFGdtNrGeawDH+DHFl/idyo7NvJ1+DESupbN8LMzARMwARMwARMwARMwARMwgdoERhGNWCcBs9NiJfFzoeV78lUOwXMhv5VfFXyfIhKRuM39FERXJhYvZNM9+SqH0L6Q3ZdVEb3fBEzABEzABEzABEzABEzABEIERhONuTESNBcSQg+0vZFPvcAFcfi+fP6ymbXWb2UiaqXVs8yfatlESCKsruSvs+VOy53s2mo5GddQLGL3I3lGF3ds2JmACZiACZiACZiACZiACZhAGwIvPX36tM1xvRwjYXShhN+rmXguHjep+EpzVd4/NUFYtq+4LfsRw/fl7xXDE+seXQzAEceNgmH4WOcfpnYmYAImYAImYAImYAImYAI1CExKNGKvOvenWmzk35Sv4xBJl/KbJY2qicNaZcLX5aCotx7K318SBwrVhbNo7IKi0zABEzABEzABEzABEzhGApMTjflJUCf/XOuIwdfzsBpLRBMvqdnUiDu5KCrzmYy6L0/Zm7xZ9jHHqdxbLe0CBCwaA1AcZAImYAImYAImYAImYAI1CExWNOa2q7O/1vqFfBPxyOjjg8xvJaautT5Jp/KtZBgiEd+kjIr+/PnODRt2cQIWjXE23mMCJmACJmACJmACJmACKQKTF4258S3FY344L4VBRCIgr/LAMZYqx6nyXckjElk2GVFU9L2r9TxnHtnL/bTnjTjck/czja4QJmACJmACJmACJmACJtCAwGxEY16mA8VjngwiciuPgNz1JSQzgXimPHK/0nobkajD9o5pqJeyd/Ns0791CehcwMyisS4wxzMBEzABEzABEzABEzCBjMDsRGN+5iQCVlpfyyMEunAIsmt5hCRL3Hb/W/2DKDzJfL6e+nxIdYo3Y3ygTV70s70Z7K26BCwa65JyPBMwARMwARMwARMwARO4SWC2ojEvhsQAYm2d+S6FWp7FWEumoF7K82Kf3VhGLCVfi8alnEmXwwRMwARMwARMwARMYGgCt4fOsOv8JKiulSbi6lLC4FTLc/m1/BwFJELxgTyjilda2pmACZiACZiACZiACZiACZjAqARmLxqL9LIRuUuF5QJypXVEJMtDniXU4b05nq9EKHpEsTfE+4T/l37P5P+p32ycugmYgAmYgAmYgAmYgAksi8Dsp6fWPR0ahUQwrORZ4scYieRTIFv5K5YSuazbmYAJmIAJmIAJmIAJmIAJmMBkCRyNaAydAQnJlcJPM4+QPJFneeioZPGlOjulh0i8yqbSatXOBEzABEzABEzABEzABEzABOZB4KhFY9UpykRlVbR8P5/u2OUbXpqACZiACZiACZiACZiACZjAEgj8f9vRzelLc186AAAAAElFTkSuQmCC" alt="Core Shipping logo" />
-        </div>
-        <div class="hero-copy">
-          <div class="hero-title-row">
-            <h1>Firm Offer Mail Generator</h1>
+        <header class="hero">
+          <div class="hero-row">
+            <div class="hero-left">
+              <div class="logo-box">
+                <img src="./assets/core-shipping-logo.png" alt="Core Shipping logo" />
+              </div>
+              <div class="hero-copy">
+                <h1>Firm Offer Mail Generator</h1>
+                <p>Compact workflow with the same generated firm offer output.</p>
+              </div>
+            </div>
             <div class="hero-actions">
               <a class="top-link" href="./customize.html">Customize</a>
-              <a class="top-link" href="./index.html">← Back to Tools</a>
+              <a class="top-link" href="./index.html">Back to Tools</a>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </header>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h2>Input Workspace</h2>
-          <span>Commercial terms, specs block, and email settings</span>
-        </div>
-        <div class="content">
-          <form id="offerForm" class="form-sections">
-            <div class="section">
-              <div class="section-title">
-                <h3>1. Vessel & Cargo</h3>
-                <div class="section-tag">Specs auto-load from structured rows</div>
-              </div>
-              <div class="grid">
-                <div class="field">
-                  <label for="vessel">Vessel</label>
-                  <select id="vessel" name="vessel"></select>
-                </div>
-                <div class="field">
-                  <label for="account">Account</label>
-                  <input id="account" name="account" value="Please advise" />
-                </div>
-                <div class="field full">
-                  <label for="cargo">Cargo</label>
-                  <input id="cargo" name="cargo" value="As per given details" placeholder="Enter cargo details" />
-                </div>
-                <div class="field">
-                  <label for="underDeck">Under deck wording</label>
-                  <select id="underDeck" name="underDeck"></select>
-                </div>
-                <div class="field">
-                  <label for="cargoStackable">Cargo stackable wording</label>
-                  <select id="cargoStackable" name="cargoStackable"></select>
-                </div>
-                <div class="field">
-                  <label for="pcBasis">P/c basis line</label>
-                  <input id="pcBasis" name="pcBasis" value="P/c basis" />
-                </div>
-                <div class="field full">
-                  <label>Vessel specs</label>
-                  <div class="section-subnote">Specs are auto-generated from enabled structured vessel rows in Customize Generator.</div>
-                  <input type="checkbox" id="includeVesselSpecs" name="includeVesselSpecs" class="hidden" checked />
-                  <textarea id="vesselSpecs" name="vesselSpecs" class="hidden"></textarea>
-                  <textarea id="vesselSpecsHtml" name="vesselSpecsHtml" class="hidden"></textarea>
-                </div>
-                <div class="field full">
-                  <label for="vesselSpecsPreview">Generated vessel specs block</label>
-                  <div class="spec-preview-box">
-                    <pre id="vesselSpecsPreview">Select a vessel to auto-generate the vessel specs block.</pre>
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Input Workspace</h2>
+            <span id="wizardStepLabel">Step 1 of 3</span>
+          </div>
+          <div class="content">
+            <div class="wizard-progress" aria-label="Generator steps">
+              <button type="button" class="wizard-pill active" data-step-pill="1"><span>1</span> Setup</button>
+              <button type="button" class="wizard-pill" data-step-pill="2"><span>2</span> Terms</button>
+              <button type="button" class="wizard-pill" data-step-pill="3"><span>3</span> Review</button>
+            </div>
+
+            <form id="offerForm" class="form-sections">
+              <div class="wizard-step-content" data-step-content="1">
+                <div class="section">
+                  <div class="section-title">
+                    <h3>Vessel, Cargo & Account</h3>
+                    <div class="section-tag">Specs auto-load</div>
                   </div>
-                  <div class="muted-note">Raw mail uses numbered lines. HTML mail uses compact grouped lines from the same structured rows.</div>
+                  <div class="grid">
+                    <div class="field">
+                      <label for="vessel">Vessel</label>
+                      <select id="vessel" name="vessel"></select>
+                    </div>
+                    <div class="field">
+                      <label for="account">Account</label>
+                      <input id="account" name="account" value="Please advise" />
+                    </div>
+                    <div class="field full">
+                      <label for="cargo">Cargo</label>
+                      <input id="cargo" name="cargo" value="As per given details" placeholder="Enter cargo details" />
+                    </div>
+                    <div class="field">
+                      <label for="underDeck">Under deck wording</label>
+                      <select id="underDeck" name="underDeck"></select>
+                    </div>
+                    <div class="field">
+                      <label for="cargoStackable">Cargo stackable wording</label>
+                      <select id="cargoStackable" name="cargoStackable"></select>
+                    </div>
+                    <div class="field">
+                      <label for="pcBasis">P/c basis line</label>
+                      <input id="pcBasis" name="pcBasis" value="P/c basis" />
+                    </div>
+                    <div class="field full">
+                      <label>Vessel specs</label>
+                      <div class="section-subnote">Specs are generated from enabled structured vessel rows in Customize Generator.</div>
+                      <input type="checkbox" id="includeVesselSpecs" name="includeVesselSpecs" class="hidden" checked />
+                      <textarea id="vesselSpecs" name="vesselSpecs" class="hidden"></textarea>
+                      <textarea id="vesselSpecsHtml" name="vesselSpecsHtml" class="hidden"></textarea>
+                    </div>
+                    <div class="field full">
+                      <label for="vesselSpecsPreview">Generated vessel specs block</label>
+                      <div class="spec-preview-box">
+                        <pre id="vesselSpecsPreview">Select a vessel to auto-generate the vessel specs block.</pre>
+                      </div>
+                      <div class="muted-note">Raw mail uses numbered lines. HTML mail uses compact grouped lines from the same structured rows.</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div class="section">
-              <div class="section-title">
-                <h3>2. Voyage Details</h3>
-                <div class="section-tag">Port suffix editable</div>
-              </div>
-              <div class="grid">
-                <div class="field">
-                  <label for="laycanDate">Lay/can</label>
-                  <input id="laycanDate" name="laycanDate" value="01-10 Sep 2024" />
-                </div>
-                <div class="field">
-                  <label for="terms">Terms</label>
-                  <select id="terms" name="terms"></select>
-                </div>
-                <div class="field full">
-                  <div class="muted-note" id="termMeaningNote">Free In Free Out = Loading and discharging on free in / free out basis.</div>
-                </div>
-                <div class="field">
-                  <label for="pol">POL</label>
-                  <input id="pol" name="pol" placeholder="Port of Loading" />
-                </div>
-                <div class="field">
-                  <label for="pod">POD</label>
-                  <input id="pod" name="pod" placeholder="Port of Discharge" />
-                </div>
-                <div class="field">
-                  <label for="polSuffix">POL port suffix</label>
-                  <input id="polSuffix" name="polSuffix" value="Owners terminal" />
-                </div>
-                <div class="field">
-                  <label for="podSuffix">POD port suffix</label>
-                  <input id="podSuffix" name="podSuffix" value="Owners terminal" />
-                </div>
-              </div>
-            </div>
-
-            <div class="section">
-              <div class="section-title">
-                <h3>3. Freight, Laytime & Dem/Det</h3>
-                <div class="section-tag">Source logic preserved</div>
-              </div>
-              <div class="grid">
-                <div class="field">
-                  <label for="currency">Freight currency</label>
-                  <select id="currency" name="currency"></select>
-                </div>
-                <div class="field">
-                  <label for="freightTerms">Freight terms</label>
-                  <select id="freightTerms" name="freightTerms"></select>
-                </div>
-                <div class="field">
-                  <label for="freightAmount">Freight amount</label>
-                  <input id="freightAmount" name="freightAmount" value="85.00" />
-                </div>
-                <div class="field">
-                  <label for="demdetAmount">Dem/Det amount</label>
-                  <input id="demdetAmount" name="demdetAmount" value="10,500" />
-                </div>
-              </div>
-
-              <div class="field full" style="margin-top: 10px;">
-                <div class="switch-row" id="congestionRow">
-                  <input type="checkbox" id="includeCongestion" name="includeCongestion" checked />
-                  <label for="includeCongestion" style="margin:0; font-weight:700; cursor:pointer;"><span id="congestionToggleLabel">Congestion clause option</span></label>
-                </div>
-              </div>
-
-              <div id="laytimeFields" class="grid" style="margin-top: 14px;">
-                <div class="field" id="loadingDaysField">
-                  <label for="loadingDays">Loading days</label>
-                  <input id="loadingDays" name="loadingDays" value="2" />
-                </div>
-                <div class="field" id="loadingTermsField">
-                  <label for="loadingTerms">Loading terms</label>
-                  <select id="loadingTerms" name="loadingTerms"></select>
-                </div>
-                <div class="field" id="dischargingDaysField">
-                  <label for="dischargingDays">Discharging days</label>
-                  <input id="dischargingDays" name="dischargingDays" value="2" />
-                </div>
-                <div class="field" id="dischargingTermsField">
-                  <label for="dischargingTerms">Discharging terms</label>
-                  <select id="dischargingTerms" name="dischargingTerms"></select>
+                <div class="section">
+                  <div class="section-title">
+                    <h3>Recipients & Opening Text</h3>
+                    <div class="section-tag">Auto subject available</div>
+                  </div>
+                  <div class="grid">
+                    <div class="field">
+                      <label for="emailTo">To</label>
+                      <input id="emailTo" name="emailTo" placeholder="recipient@example.com" />
+                    </div>
+                    <div class="field">
+                      <label for="emailCc">CC</label>
+                      <input id="emailCc" name="emailCc" placeholder="cc@example.com" />
+                    </div>
+                    <div class="field full">
+                      <label for="emailSubject">Subject</label>
+                      <input id="emailSubject" name="emailSubject" placeholder="Auto-generated if left blank" />
+                    </div>
+                    <div class="field full">
+                      <label for="greeting">Greeting</label>
+                      <input id="greeting" name="greeting" value="Dear Sirs," />
+                    </div>
+                    <div class="field full">
+                      <label for="openingParagraph">Opening paragraph</label>
+                      <textarea id="openingParagraph" name="openingParagraph">Thank you for the cargo proposal. Please find Owners indication as follows:</textarea>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div id="fltFields" class="grid hidden" style="margin-top: 14px;">
-                <div class="field" id="fltLoadingField">
-                  <label for="fltLoadingText" id="loadingTextLabel">FLT H/H loading text</label>
-                  <input id="fltLoadingText" name="fltLoadingText" value="As fast as vessel can load" />
+              <div class="wizard-step-content hidden-step" data-step-content="2">
+                <div class="section">
+                  <div class="section-title">
+                    <h3>Voyage & Ports</h3>
+                    <div class="section-tag">Port suffix editable</div>
+                  </div>
+                  <div class="grid">
+                    <div class="field">
+                      <label for="laycanDate">Lay/can</label>
+                      <input id="laycanDate" name="laycanDate" value="01-10 Sep 2024" />
+                    </div>
+                    <div class="field">
+                      <label for="terms">Terms</label>
+                      <select id="terms" name="terms"></select>
+                    </div>
+                    <div class="field full">
+                      <div class="muted-note" id="termMeaningNote">Free In Free Out = Loading and discharging on free in / free out basis.</div>
+                    </div>
+                    <div class="field">
+                      <label for="pol">POL</label>
+                      <input id="pol" name="pol" placeholder="Port of Loading" />
+                    </div>
+                    <div class="field">
+                      <label for="pod">POD</label>
+                      <input id="pod" name="pod" placeholder="Port of Discharge" />
+                    </div>
+                    <div class="field">
+                      <label for="polSuffix">POL port suffix</label>
+                      <input id="polSuffix" name="polSuffix" value="Owners terminal" />
+                    </div>
+                    <div class="field">
+                      <label for="podSuffix">POD port suffix</label>
+                      <input id="podSuffix" name="podSuffix" value="Owners terminal" />
+                    </div>
+                  </div>
                 </div>
-                <div class="field" id="fltDischargingField">
-                  <label for="fltDischargingText" id="dischargingTextLabel">FLT H/H discharging text</label>
-                  <input id="fltDischargingText" name="fltDischargingText" value="As fast as vessel can discharge" />
-                </div>
-                <div class="field full">
-                  <label for="congestionClause">Congestion clause</label>
-                  <input id="congestionClause" name="congestionClause" value="Congestion, if any, to count as detention both ends" />
-                </div>
-              </div>
-            </div>
 
-            <div class="section">
-              <div class="section-title">
-                <h3>4. Agents & Clauses</h3>
-                <div class="section-tag">Extra clauses supported</div>
+                <div class="section">
+                  <div class="section-title">
+                    <h3>Freight, Laytime & Dem/Det</h3>
+                    <div class="section-tag">Source logic preserved</div>
+                  </div>
+                  <div class="grid">
+                    <div class="field">
+                      <label for="currency">Freight currency</label>
+                      <select id="currency" name="currency"></select>
+                    </div>
+                    <div class="field">
+                      <label for="freightTerms">Freight terms</label>
+                      <select id="freightTerms" name="freightTerms"></select>
+                    </div>
+                    <div class="field">
+                      <label for="freightAmount">Freight amount</label>
+                      <input id="freightAmount" name="freightAmount" value="85.00" />
+                    </div>
+                    <div class="field">
+                      <label for="demdetAmount">Dem/Det amount</label>
+                      <input id="demdetAmount" name="demdetAmount" value="10,500" />
+                    </div>
+                  </div>
+
+                  <div class="field full compact-row">
+                    <div class="switch-row" id="congestionRow">
+                      <input type="checkbox" id="includeCongestion" name="includeCongestion" checked />
+                      <label for="includeCongestion"><span id="congestionToggleLabel">Congestion clause option</span></label>
+                    </div>
+                  </div>
+
+                  <div id="laytimeFields" class="grid compact-row">
+                    <div class="field" id="loadingDaysField">
+                      <label for="loadingDays">Loading days</label>
+                      <input id="loadingDays" name="loadingDays" value="2" />
+                    </div>
+                    <div class="field" id="loadingTermsField">
+                      <label for="loadingTerms">Loading terms</label>
+                      <select id="loadingTerms" name="loadingTerms"></select>
+                    </div>
+                    <div class="field" id="dischargingDaysField">
+                      <label for="dischargingDays">Discharging days</label>
+                      <input id="dischargingDays" name="dischargingDays" value="2" />
+                    </div>
+                    <div class="field" id="dischargingTermsField">
+                      <label for="dischargingTerms">Discharging terms</label>
+                      <select id="dischargingTerms" name="dischargingTerms"></select>
+                    </div>
+                  </div>
+
+                  <div id="fltFields" class="grid hidden compact-row">
+                    <div class="field" id="fltLoadingField">
+                      <label for="fltLoadingText" id="loadingTextLabel">FLT H/H loading text</label>
+                      <input id="fltLoadingText" name="fltLoadingText" value="As fast as vessel can load" />
+                    </div>
+                    <div class="field" id="fltDischargingField">
+                      <label for="fltDischargingText" id="dischargingTextLabel">FLT H/H discharging text</label>
+                      <input id="fltDischargingText" name="fltDischargingText" value="As fast as vessel can discharge" />
+                    </div>
+                    <div class="field full">
+                      <label for="congestionClause">Congestion clause</label>
+                      <input id="congestionClause" name="congestionClause" value="Congestion, if any, to count as detention both ends" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="grid">
-                <div class="field">
-                  <label for="agentLoad">Owners agents at load port</label>
-                  <select id="agentLoad" name="agentLoad"></select>
+
+              <div class="wizard-step-content hidden-step" data-step-content="3">
+                <div class="section">
+                  <div class="section-title">
+                    <h3>Review & Actions</h3>
+                    <div class="section-tag">Preview stays live</div>
+                  </div>
+                  <div class="grid">
+                    <div class="field">
+                      <label for="markerLine">Marker line</label>
+                      <input id="markerLine" name="markerLine" value="++" />
+                    </div>
+                    <div class="field">
+                      <label for="forLine">Offer lead-in line</label>
+                      <input id="forLine" name="forLine" value="For" />
+                    </div>
+                    <div class="field">
+                      <label for="endOfferLine">End offer line</label>
+                      <input id="endOfferLine" name="endOfferLine" value="End offer" />
+                    </div>
+                    <div class="field">
+                      <label for="closingParagraph">Closing paragraph</label>
+                      <input id="closingParagraph" name="closingParagraph" value="Looking forward to hear" />
+                    </div>
+                  </div>
                 </div>
-                <div class="field">
-                  <label for="agentDischarge">Owners agents at discharge port</label>
-                  <select id="agentDischarge" name="agentDischarge"></select>
-                </div>
-                <div class="field">
-                  <label for="commissionPercentage">Commission percentage</label>
-                  <input id="commissionPercentage" name="commissionPercentage" value="" placeholder="e.g. 2.5 or 3,75" />
-                </div>
-                <div class="field">
-                  <label for="applicableContract">Applicable contract</label>
-                  <input id="applicableContract" name="applicableContract" value="Carriers BN" />
-                </div>
-                <div class="field full">
-                  <label for="extraClauses">Extra clause lines</label>
-                  <textarea id="extraClauses" name="extraClauses" placeholder="One clause per line. Example:
+
+                <details class="section advanced-settings" id="advancedSettings" open>
+                  <summary class="section-title">
+                    <h3>Advanced Clauses & Signature</h3>
+                    <span class="section-tag">Editable defaults</span>
+                  </summary>
+
+                  <div class="grid">
+                    <div class="field">
+                      <label for="agentLoad">Owners agents at load port</label>
+                      <select id="agentLoad" name="agentLoad"></select>
+                    </div>
+                    <div class="field">
+                      <label for="agentDischarge">Owners agents at discharge port</label>
+                      <select id="agentDischarge" name="agentDischarge"></select>
+                    </div>
+                    <div class="field">
+                      <label for="commissionPercentage">Commission percentage</label>
+                      <input id="commissionPercentage" name="commissionPercentage" value="" placeholder="e.g. 2.5 or 3,75" />
+                    </div>
+                    <div class="field">
+                      <label for="applicableContract">Applicable contract</label>
+                      <input id="applicableContract" name="applicableContract" value="Carriers BN" />
+                    </div>
+                    <div class="field full">
+                      <label for="extraClauses">Extra clause lines</label>
+                      <textarea id="extraClauses" name="extraClauses" placeholder="One clause per line. Example:
 Sub stowage
 Armed guard / security expenses to be for owners account"></textarea>
-                </div>
-                <div class="field full">
-                  <label for="finalClause">Final clause</label>
-                  <textarea id="finalClause" name="finalClause">Sub all further terms / conditions
+                    </div>
+                    <div class="field full">
+                      <label for="finalClause">Final clause</label>
+                      <textarea id="finalClause" name="finalClause">Sub all further terms / conditions
 Indication is based on current tariffs for load/disch costs and d/as</textarea>
-                </div>
-              </div>
-            </div>
-
-            <div class="section">
-              <div class="section-title">
-                <h3>5. Email Text</h3>
-                <div class="section-tag">Shipping-style draft</div>
-              </div>
-              <div class="grid">
-                <div class="field">
-                  <label for="emailTo">To</label>
-                  <input id="emailTo" name="emailTo" placeholder="recipient@example.com" />
-                </div>
-                <div class="field">
-                  <label for="emailCc">CC</label>
-                  <input id="emailCc" name="emailCc" placeholder="cc@example.com" />
-                </div>
-                <div class="field full">
-                  <label for="emailSubject">Subject</label>
-                  <input id="emailSubject" name="emailSubject" placeholder="Auto-generated if left blank" />
-                </div>
-                <div class="field full">
-                  <label for="greeting">Greeting</label>
-                  <input id="greeting" name="greeting" value="Dear Sirs," />
-                </div>
-                <div class="field full">
-                  <label for="openingParagraph">Opening paragraph</label>
-                  <textarea id="openingParagraph" name="openingParagraph">Thank you for the cargo proposal. Please find Owners indication as follows:</textarea>
-                </div>
-                <div class="field">
-                  <label for="markerLine">Marker line</label>
-                  <input id="markerLine" name="markerLine" value="++" />
-                </div>
-                <div class="field">
-                  <label for="forLine">Offer lead-in line</label>
-                  <input id="forLine" name="forLine" value="For" />
-                </div>
-                <div class="field">
-                  <label for="endOfferLine">End offer line</label>
-                  <input id="endOfferLine" name="endOfferLine" value="End offer" />
-                </div>
-                <div class="field">
-                  <label for="closingParagraph">Closing paragraph</label>
-                  <input id="closingParagraph" name="closingParagraph" value="Looking forward to hear" />
-                </div>
-              </div>
-            </div>
-
-            <div class="section">
-              <div class="section-title">
-                <h3>6. Signature Block</h3>
-                <div class="section-tag">Core Shipping style</div>
-              </div>
-              <div class="grid">
-                <div class="field">
-                  <label for="signOff">Sign-off</label>
-                  <input id="signOff" name="signOff" value="Best regards," />
-                </div>
-                <div class="field">
-                  <label for="senderName">Sender name</label>
-                  <input id="senderName" name="senderName" value="Your Name" />
-                </div>
-                <div class="field">
-                  <label for="senderTitle">Title</label>
-                  <input id="senderTitle" name="senderTitle" value="Chartering / Operations" />
-                </div>
-                <div class="field">
-                  <label for="companyName">Company</label>
-                  <input id="companyName" name="companyName" value="Core Shipping" />
-                </div>
-                <div class="field full">
-                  <label for="companyAddress">Address</label>
-                  <textarea id="companyAddress" name="companyAddress">Bagdat Cad, Turab Sok, No: 06/06
+                    </div>
+                    <div class="field">
+                      <label for="signOff">Sign-off</label>
+                      <input id="signOff" name="signOff" value="Best regards," />
+                    </div>
+                    <div class="field">
+                      <label for="senderName">Sender name</label>
+                      <input id="senderName" name="senderName" value="Your Name" />
+                    </div>
+                    <div class="field">
+                      <label for="senderTitle">Title</label>
+                      <input id="senderTitle" name="senderTitle" value="Chartering / Operations" />
+                    </div>
+                    <div class="field">
+                      <label for="companyName">Company</label>
+                      <input id="companyName" name="companyName" value="Core Shipping" />
+                    </div>
+                    <div class="field full">
+                      <label for="companyAddress">Address</label>
+                      <textarea id="companyAddress" name="companyAddress">Bagdat Cad, Turab Sok, No: 06/06
 34744, Istanbul, Turkey</textarea>
-                </div>
-                <div class="field">
-                  <label for="senderMobile">Mobile</label>
-                  <input id="senderMobile" name="senderMobile" placeholder="+90 ..." />
-                </div>
-                <div class="field">
-                  <label for="senderDirect">Direct</label>
-                  <input id="senderDirect" name="senderDirect" placeholder="+90 ..." />
-                </div>
-                <div class="field">
-                  <label for="senderEmail">E-mail</label>
-                  <input id="senderEmail" name="senderEmail" placeholder="your@email.com" />
-                </div>
-                <div class="field">
-                  <label for="senderWeb">Web</label>
-                  <input id="senderWeb" name="senderWeb" value="www.core-shipping.com" />
-                </div>
+                    </div>
+                    <div class="field">
+                      <label for="senderMobile">Mobile</label>
+                      <input id="senderMobile" name="senderMobile" placeholder="+90 ..." />
+                    </div>
+                    <div class="field">
+                      <label for="senderDirect">Direct</label>
+                      <input id="senderDirect" name="senderDirect" placeholder="+90 ..." />
+                    </div>
+                    <div class="field">
+                      <label for="senderEmail">E-mail</label>
+                      <input id="senderEmail" name="senderEmail" placeholder="your@email.com" />
+                    </div>
+                    <div class="field">
+                      <label for="senderWeb">Web</label>
+                      <input id="senderWeb" name="senderWeb" value="www.core-shipping.com" />
+                    </div>
+                  </div>
+                </details>
               </div>
-            </div>
-          </form>
-        </div>
-      </section>
 
+              <div class="wizard-actions">
+                <button type="button" class="secondary" id="wizardBackBtn">Back</button>
+                <div class="wizard-shortcut-note">Preview updates automatically. Expert users can leave warnings unresolved.</div>
+                <button type="button" class="primary" id="wizardNextBtn">Next</button>
+              </div>
+            </form>
+          </div>
+        </section>
       </div>
 
-      <div class="preview-column">
-      <section class="panel preview-panel">
-        <div class="panel-header">
-          <h2>Email Preview</h2>
-          <span id="previewModeLabel">Raw text view</span>
-        </div>
-        <div class="content">
+      <div class="preview-column" id="previewColumn">
+        <section class="panel preview-panel">
+          <div class="panel-header">
+            <h2>Email Preview</h2>
+            <span id="previewModeLabel">Raw text view</span>
+          </div>
+          <div class="content">
+            <div class="validation-summary" id="validationSummary" aria-live="polite"></div>
 
-          <div class="view-bar">
-            <div class="view-toggle">
-              <button class="vtab active" id="tabRaw">Raw</button>
-              <button class="vtab" id="tabHtml">HTML</button>
+            <div class="view-bar">
+              <div class="view-toggle">
+                <button type="button" class="vtab active" id="tabRaw">Raw</button>
+                <button type="button" class="vtab" id="tabHtml">HTML</button>
+              </div>
+
+              <div class="btn-group" id="btnGroupRaw">
+                <button type="button" class="primary" id="copyRawBtn">Copy Raw</button>
+                <button type="button" class="secondary" id="downloadRawBtn">Download .txt</button>
+                <button type="button" class="accent" id="openDraftBtn">Open Draft</button>
+              </div>
+
+              <div class="btn-group hidden" id="btnGroupHtml">
+                <button type="button" class="primary" id="copyHtmlBtn">Copy HTML</button>
+                <button type="button" class="secondary" id="downloadHtmlBtn">Download .html</button>
+                <button type="button" class="accent" id="openDraftHtmlBtn">Open Draft + Paste</button>
+              </div>
             </div>
 
-            <div class="btn-group" id="btnGroupRaw">
-              <button type="button" class="primary" id="copyRawBtn">Copy Raw Mail</button>
-              <button type="button" class="accent" id="openDraftBtn">Open Email Draft</button>
-            </div>
+            <div class="status" id="status"></div>
 
-            <div class="btn-group hidden" id="btnGroupHtml">
-              <button type="button" class="primary" id="copyHtmlBtn">Copy HTML Mail</button>
-              <button type="button" class="accent" id="openDraftHtmlBtn">Open Draft · Paste Ready</button>
+            <div class="preview-shell">
+              <div class="subject-bar">
+                <small>Subject</small>
+                <div class="subject-text" id="subjectPreview"></div>
+              </div>
+
+              <div class="mail-meta">
+                <div class="mail-meta-row"><strong>To</strong><span id="toPreview">-</span></div>
+                <div class="mail-meta-row"><strong>CC</strong><span id="ccPreview">-</span></div>
+              </div>
+
+              <pre class="preview-body" id="emailPreview"></pre>
+              <iframe id="htmlPreviewFrame" class="html-preview-frame hidden" sandbox="allow-same-origin" title="HTML email preview"></iframe>
             </div>
           </div>
-
-          <div class="status" id="status"></div>
-
-          <div class="preview-shell">
-            <div class="subject-bar">
-              <small>Subject</small>
-              <div class="subject-text" id="subjectPreview"></div>
-            </div>
-
-            <div class="mail-meta">
-              <div class="mail-meta-row"><strong>To</strong><span id="toPreview">—</span></div>
-              <div class="mail-meta-row"><strong>CC</strong><span id="ccPreview">—</span></div>
-            </div>
-
-            <pre class="preview-body" id="emailPreview"></pre>
-            <iframe id="htmlPreviewFrame" class="html-preview-frame hidden" sandbox="allow-same-origin" title="HTML email preview"></iframe>
-          </div>
-        </div>
-      </section>
+        </section>
       </div>
     </div>
   </div>
+
+  <nav class="mobile-action-bar" aria-label="Generator mobile actions">
+    <button type="button" class="secondary" id="mobileBackBtn">Back</button>
+    <button type="button" class="primary" id="mobileNextBtn">Next</button>
+    <button type="button" class="secondary" id="mobilePreviewBtn">Preview</button>
+    <button type="button" class="accent" id="mobileCopyBtn">Copy</button>
+  </nav>
+
   <script type="module" src="./js/firm-offer-app.js"></script>
 </body>
 </html>

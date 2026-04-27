@@ -4,311 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Core Shipping | Customize Generator</title>
-  <style>
-    :root {
-      --bg-1: #edf2f7;
-      --bg-2: #e4edf6;
-      --panel: rgba(255,255,255,0.94);
-      --border: #d7e0eb;
-      --border-strong: #c3cfde;
-      --text: #17314e;
-      --muted: #667b93;
-      --navy: #16355d;
-      --navy-2: #244873;
-      --gold: #caa25d;
-      --danger: #a53434;
-      --success: #166a52;
-      --shadow: 0 18px 42px rgba(16, 40, 70, 0.14);
-      --shadow-soft: 0 10px 24px rgba(16, 40, 70, 0.10);
-      --radius: 24px;
-    }
+  <link rel="stylesheet" href="./styles/core-ui.css" />
+  <script>
+    (function () {
+      const THEME_STORAGE_KEY = 'coreShippingTheme';
+      const LEGACY_THEME_STORAGE_KEY = 'firmOfferGeneratorTheme';
 
-    * { box-sizing: border-box; }
+      let theme = 'light';
+      try {
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        const legacy = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          theme = stored;
+        } else if (legacy === 'dark' || legacy === 'light') {
+          theme = legacy;
+          localStorage.setItem(THEME_STORAGE_KEY, legacy);
+        }
+      } catch (_) {}
 
-    html[data-theme="dark"] {
-      --bg-1: #0d1726;
-      --bg-2: #09121d;
-      --panel: rgba(15,26,40,0.94);
-      --border: #2c3f56;
-      --border-strong: #31445d;
-      --text: #e5edf8;
-      --muted: #a7bdd7;
-      --shadow: 0 18px 42px rgba(0,0,0,0.42);
-      --shadow-soft: 0 10px 24px rgba(0,0,0,0.30);
-    }
-
-    html[data-theme="dark"] input,
-    html[data-theme="dark"] select,
-    html[data-theme="dark"] textarea,
-    html[data-theme="dark"] pre,
-    html[data-theme="dark"] .repeat-card,
-    html[data-theme="dark"] .subsection,
-    html[data-theme="dark"] .option-card,
-    html[data-theme="dark"] .structured-row,
-    html[data-theme="dark"] .preview-box,
-    html[data-theme="dark"] .top-link,
-    html[data-theme="dark"] button.secondary {
-      background: #152337;
-      border-color: #31445d;
-      color: #e5edf8;
-      box-shadow: none;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      padding: 18px;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(22,53,93,0.10), transparent 22%),
-        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
-    }
-
-    .page {
-      width: min(1480px, 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 14px;
-    }
-
-    .top-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .top-link, button {
-      appearance: none;
-      border: 0;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .top-link, .secondary {
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, #ffffff, #f6f9fc);
-      color: var(--navy);
-      box-shadow: var(--shadow-soft);
-    }
-
-    .primary {
-      color: #fff;
-      background: linear-gradient(180deg, var(--navy-2), var(--navy));
-      box-shadow: 0 10px 22px rgba(20, 52, 91, 0.18);
-    }
-
-    .accent {
-      background: linear-gradient(180deg, #d8b46f, var(--gold));
-      color: #162b43;
-      box-shadow: 0 10px 18px rgba(191, 146, 69, 0.20);
-    }
-
-    .danger {
-      color: #fff;
-      background: linear-gradient(180deg, #c95555, #a53434);
-      box-shadow: 0 10px 18px rgba(165, 52, 52, 0.22);
-    }
-
-    .hero, .panel {
-      background: var(--panel);
-      border: 1px solid rgba(255,255,255,0.86);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-      overflow: hidden;
-    }
-
-    .hero {
-      padding: 22px 24px;
-      background: linear-gradient(180deg, rgba(22,53,93,0.08), rgba(255,255,255,0.30));
-    }
-
-    .hero-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-    }
-
-    h1 { margin: 0 0 8px; font-size: clamp(2rem, 3vw, 2.8rem); letter-spacing: -0.04em; }
-    p { margin: 0; color: var(--muted); line-height: 1.65; }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 58%) minmax(0, 42%);
-      gap: 14px;
-      align-items: start;
-    }
-
-    .column { display: grid; gap: 14px; }
-    .sticky { position: sticky; top: 18px; }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(22,53,93,0.06), rgba(255,255,255,0.22));
-    }
-
-    .panel-header h2 { margin: 0; font-size: 1rem; }
-    .panel-header span { color: var(--muted); font-size: 0.84rem; }
-
-    .content { padding: 16px; display: grid; gap: 14px; }
-
-    .subsection {
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px;
-      background: linear-gradient(180deg, #ffffff, #f7f9fc);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
-      display: grid;
-      gap: 12px;
-    }
-
-    .subsection h3 { margin: 0; font-size: 0.96rem; }
-    .grid, .grid-2 { display: grid; gap: 12px; }
-    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .grid-2 { grid-template-columns: 1fr; }
-    .field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
-    .field.full { grid-column: 1 / -1; }
-
-    label { font-size: 0.8rem; font-weight: 800; color: var(--muted); }
-
-    input, select, textarea {
-      width: 100%;
-      min-width: 0;
-      padding: 11px 12px;
-      border-radius: 13px;
-      border: 1px solid var(--border-strong);
-      background: #fff;
-      color: var(--text);
-      outline: none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
-      font: inherit;
-    }
-
-    textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
-    textarea.small { min-height: 80px; }
-    textarea.code { min-height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.84rem; }
-
-    .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    .repeat-list { display: grid; gap: 10px; }
-    .repeat-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      gap: 10px;
-      align-items: center;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #fff;
-      box-shadow: var(--shadow-soft);
-    }
-
-    .pill {
-      display: inline-flex;
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: rgba(22,53,93,0.08);
-      color: var(--navy);
-      font-size: 0.74rem;
-      font-weight: 800;
-    }
-
-    .structured-grid { display: grid; gap: 10px; }
-    .structured-row {
-      display: grid;
-      grid-template-columns: minmax(130px, 0.7fr) minmax(180px, 1fr) minmax(92px, 120px) auto;
-      gap: 10px;
-      align-items: center;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #fff;
-    }
-
-    .structured-row .danger {
-      min-width: 84px;
-    }
-
-    .mini-input { padding: 8px 9px; border-radius: 10px; }
-    .icon-btn { padding: 8px 10px; font-size: 0.8rem; }
-    .option-editor { display: grid; gap: 10px; }
-    .option-card {
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px;
-      background: #fff;
-      box-shadow: var(--shadow-soft);
-      display: grid;
-      gap: 10px;
-    }
-
-    .status { min-height: 1rem; font-weight: 800; color: var(--success); }
-
-    .note { color: var(--muted); font-size: 0.78rem; line-height: 1.55; }
-
-    pre.preview {
-      margin: 0;
-      padding: 14px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: #fbfdff;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-height: 520px;
-      overflow: auto;
-      font-size: 0.84rem;
-      line-height: 1.55;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-
-    @media (max-width: 1180px) {
-      .layout { grid-template-columns: 1fr; }
-      .sticky { position: static; }
-    }
-
-    @media (max-width: 860px) {
-      .grid, .repeat-row { grid-template-columns: 1fr; }
-      .structured-row { grid-template-columns: 1fr; }
-      body { padding: 12px; }
-    }
-  </style>
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
 </head>
-<body>
+<body class="customize-page">
   <div class="page">
-    <section class="hero">
-      <div class="hero-top">
-        <div class="top-actions">
-          <a class="top-link" href="./index.html">← Back to Tools</a>
-          <a class="top-link" href="./firm-generator.html">Open Generator</a>
+    <header class="hero">
+      <div class="hero-row">
+        <div class="hero-left">
+          <div class="logo-box">
+            <img src="./assets/core-shipping-logo.png" alt="Core Shipping logo" />
+          </div>
+          <div class="hero-copy">
+            <h1>Customize Generator</h1>
+            <p>Manage shared vessels, structured specs, dropdowns, and defaults.</p>
+          </div>
         </div>
-        <div class="top-actions">
+        <div class="hero-actions">
+          <a class="top-link" href="./index.html">Back to Tools</a>
+          <a class="top-link" href="./firm-generator.html">Open Generator</a>
           <button type="button" class="accent" id="saveCustomizeBtn">Save for All Users</button>
         </div>
       </div>
-      <h1>Customize Generator</h1>
-    </section>
+    </header>
 
     <div class="status" id="status"></div>
 
-    <div class="layout">
+    <div class="layout customize-layout">
       <div class="column">
         <section class="panel">
           <div class="panel-header">
@@ -325,7 +66,7 @@
                 <div class="field">
                   <label>Actions</label>
                   <div class="inline-actions">
-                    <button type="button" class="secondary" id="addVesselBtn">+ Add vessel</button>
+                    <button type="button" class="secondary" id="addVesselBtn">Add vessel</button>
                     <button type="button" class="danger" id="removeVesselBtn">Remove vessel</button>
                   </div>
                 </div>
@@ -336,7 +77,7 @@
                 <div class="field full">
                   <label for="customizerRawSpecs">Raw source specs</label>
                   <textarea id="customizerRawSpecs" placeholder="Paste or keep your raw source spec text here."></textarea>
-                  <div class="note">This raw block is optional as source/reference data. Generator output is driven by structured spec rows below.</div>
+                  <div class="note">This raw block is optional source/reference data. Generator output is driven by structured spec rows below.</div>
                 </div>
               </div>
             </div>
@@ -345,7 +86,7 @@
               <h3>Structured vessel spec rows</h3>
               <div class="note">Each row controls label, value, and optional HTML line grouping. Removing a row removes it for all vessels.</div>
               <div class="inline-actions">
-                <button type="button" class="secondary" id="addSpecRowBtn">+ Add spec row</button>
+                <button type="button" class="secondary" id="addSpecRowBtn">Add spec row</button>
               </div>
               <div id="structuredSpecsGrid" class="structured-grid"></div>
             </div>
@@ -357,7 +98,7 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Selectables & Conditions</h2>
-            <span>Everything that powers generator dropdowns and term logic</span>
+            <span>Dropdowns and term logic used by the generator</span>
           </div>
           <div class="content">
             <div id="optionEditors" class="option-editor"></div>
@@ -371,11 +112,11 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Form Defaults</h2>
-            <span>Advanced full default object for the generator</span>
+            <span>Advanced default object for the generator</span>
           </div>
           <div class="content">
             <div class="subsection">
-              <div class="note">This JSON controls the starting values of the generator fields. Keep valid JSON object format.</div>
+              <div class="note">This JSON controls the starting values of generator fields. Keep valid JSON object format.</div>
               <textarea id="defaultsJson" class="code"></textarea>
             </div>
           </div>
@@ -384,7 +125,7 @@
         <section class="panel">
           <div class="panel-header">
             <h2>Import / Export</h2>
-            <span>Backup or move your custom generator setup</span>
+            <span>Backup or move your generator setup</span>
           </div>
           <div class="content">
             <div class="subsection">
@@ -404,27 +145,54 @@
     </div>
   </div>
 
+  <div class="modal-overlay hidden" id="saveDialog" role="dialog" aria-modal="true" aria-labelledby="saveDialogTitle">
+    <div class="dialog-card">
+      <h2 id="saveDialogTitle">Save shared customization</h2>
+      <p>Enter the admin password to publish these settings for all users.</p>
+      <div class="field">
+        <label for="savePasswordInput">Admin password</label>
+        <input id="savePasswordInput" type="password" autocomplete="current-password" />
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="secondary" id="cancelSaveBtn">Cancel</button>
+        <button type="button" class="primary" id="confirmSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="addVesselDialog" role="dialog" aria-modal="true" aria-labelledby="addVesselDialogTitle">
+    <div class="dialog-card">
+      <h2 id="addVesselDialogTitle">Add vessel</h2>
+      <p>Create a new vessel using the current structured spec template.</p>
+      <div class="field">
+        <label for="newVesselNameInput">Vessel name</label>
+        <input id="newVesselNameInput" placeholder="MV NEW VESSEL" />
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="secondary" id="cancelAddVesselBtn">Cancel</button>
+        <button type="button" class="primary" id="confirmAddVesselBtn">Add vessel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="removeVesselDialog" role="dialog" aria-modal="true" aria-labelledby="removeVesselDialogTitle">
+    <div class="dialog-card">
+      <h2 id="removeVesselDialogTitle">Remove vessel</h2>
+      <p>Remove <strong id="removeVesselName">this vessel</strong> from the shared customization data.</p>
+      <div class="dialog-actions">
+        <button type="button" class="secondary" id="cancelRemoveVesselBtn">Cancel</button>
+        <button type="button" class="danger" id="confirmRemoveVesselBtn">Remove</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
       const THEME_STORAGE_KEY = 'coreShippingTheme';
-      const LEGACY_THEME_STORAGE_KEY = 'firmOfferGeneratorTheme';
-
-      let theme = 'light';
-      try {
-        const stored = localStorage.getItem(THEME_STORAGE_KEY);
-        const legacy = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
-        if (stored === 'dark' || stored === 'light') {
-          theme = stored;
-        } else if (legacy === 'dark' || legacy === 'light') {
-          theme = legacy;
-          localStorage.setItem(THEME_STORAGE_KEY, legacy);
-        }
-      } catch (_) {}
-
-      document.documentElement.setAttribute('data-theme', theme);
       window.addEventListener('storage', (event) => {
         if (event.key === THEME_STORAGE_KEY && (event.newValue === 'dark' || event.newValue === 'light')) {
           document.documentElement.setAttribute('data-theme', event.newValue);
+          document.body.setAttribute('data-theme', event.newValue);
         }
       });
     })();
