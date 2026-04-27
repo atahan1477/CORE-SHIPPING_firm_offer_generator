@@ -57,8 +57,24 @@ test('customize page uses inline dialogs instead of native prompt and confirm fl
     assert.match(html, new RegExp(`id="${id}"`), `missing #${id}`);
   }
 
+  for (const id of ['extraClausePortRulesList', 'addExtraClausePortRuleBtn']) {
+    assert.match(html, new RegExp(`id="${id}"`), `missing #${id}`);
+  }
+
   assert.doesNotMatch(app, /window\.prompt\(/, 'customize app should not use prompt');
   assert.doesNotMatch(app, /window\.confirm\(/, 'customize app should not use confirm');
+  assert.match(app, /function\s+renderExtraClausePortRulesList\(/, 'customize app should render POL\/POD extra clause rules');
+  assert.doesNotMatch(
+    app,
+    /\.filter\(\(rule\)\s*=>\s*rule\.clause\.trim\(\)\s*\|\|\s*rule\.pol\.trim\(\)\s*\|\|\s*rule\.pod\.trim\(\)\)/,
+    'customize app should keep blank starter POL/POD rule rows'
+  );
+});
+
+test('firm generator includes POL/POD auto extra-clause sync', () => {
+  const app = read('js/firm-offer-app.js');
+  assert.match(app, /function\s+syncAutoExtraClauses\(/, 'firm app should auto-sync extra clauses');
+  assert.match(app, /runtimeConfig\.extraClausePortRules/, 'firm app should read runtime POL\/POD rules');
 });
 
 test('offer output remains compatible for subject, text, html, and mailto generation', async () => {

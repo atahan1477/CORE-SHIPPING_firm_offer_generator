@@ -23,6 +23,8 @@ const structuredSpecsGrid = document.getElementById('structuredSpecsGrid');
 const addSpecRowBtn = document.getElementById('addSpecRowBtn');
 const optionEditors = document.getElementById('optionEditors');
 const termBehaviorList = document.getElementById('termBehaviorList');
+const extraClausePortRulesList = document.getElementById('extraClausePortRulesList');
+const addExtraClausePortRuleBtn = document.getElementById('addExtraClausePortRuleBtn');
 const defaultsJson = document.getElementById('defaultsJson');
 const customizationJson = document.getElementById('customizationJson');
 const currentPreview = document.getElementById('currentPreview');
@@ -234,6 +236,20 @@ function ensureTermClauseRecords() {
       };
     }
   });
+}
+
+function ensureExtraClausePortRules() {
+  if (!Array.isArray(working.extraClausePortRules)) {
+    working.extraClausePortRules = [];
+  }
+
+  working.extraClausePortRules = working.extraClausePortRules
+    .map((rule, index) => ({
+      id: String(rule?.id || `port_clause_${index + 1}`),
+      pol: String(rule?.pol || ''),
+      pod: String(rule?.pod || ''),
+      clause: String(rule?.clause || '')
+    }));
 }
 
 function alignAllVesselRowsToTemplate() {
@@ -608,6 +624,88 @@ function renderTermBehaviorList() {
   });
 }
 
+function renderExtraClausePortRulesList() {
+  ensureExtraClausePortRules();
+  if (!extraClausePortRulesList) return;
+
+  extraClausePortRulesList.innerHTML = '';
+
+  working.extraClausePortRules.forEach((rule, index) => {
+    const card = document.createElement('div');
+    card.className = 'option-card';
+
+    const heading = document.createElement('h3');
+    heading.textContent = `Rule ${index + 1}`;
+    card.appendChild(heading);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    const polField = document.createElement('div');
+    polField.className = 'field';
+    const polLabel = document.createElement('label');
+    polLabel.textContent = 'POL match (optional)';
+    const polInput = document.createElement('input');
+    polInput.placeholder = 'e.g. Port Gentil';
+    polInput.value = rule.pol || '';
+    polInput.addEventListener('input', () => {
+      working.extraClausePortRules[index].pol = polInput.value;
+      refreshPreview();
+    });
+    polField.appendChild(polLabel);
+    polField.appendChild(polInput);
+
+    const podField = document.createElement('div');
+    podField.className = 'field';
+    const podLabel = document.createElement('label');
+    podLabel.textContent = 'POD match (optional)';
+    const podInput = document.createElement('input');
+    podInput.placeholder = 'e.g. Gabon';
+    podInput.value = rule.pod || '';
+    podInput.addEventListener('input', () => {
+      working.extraClausePortRules[index].pod = podInput.value;
+      refreshPreview();
+    });
+    podField.appendChild(podLabel);
+    podField.appendChild(podInput);
+
+    const clauseField = document.createElement('div');
+    clauseField.className = 'field full';
+    const clauseLabel = document.createElement('label');
+    clauseLabel.textContent = 'Extra clause line';
+    const clauseInput = document.createElement('textarea');
+    clauseInput.className = 'small';
+    clauseInput.placeholder = 'e.g. CARBON Tax and CGC Tax charterers account.';
+    clauseInput.value = rule.clause || '';
+    clauseInput.addEventListener('input', () => {
+      working.extraClausePortRules[index].clause = clauseInput.value;
+      refreshPreview();
+    });
+    clauseField.appendChild(clauseLabel);
+    clauseField.appendChild(clauseInput);
+
+    const actions = document.createElement('div');
+    actions.className = 'inline-actions';
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'danger';
+    removeBtn.textContent = 'Remove rule';
+    removeBtn.addEventListener('click', () => {
+      working.extraClausePortRules.splice(index, 1);
+      renderExtraClausePortRulesList();
+      refreshPreview();
+    });
+    actions.appendChild(removeBtn);
+
+    grid.appendChild(polField);
+    grid.appendChild(podField);
+    card.appendChild(grid);
+    card.appendChild(clauseField);
+    card.appendChild(actions);
+    extraClausePortRulesList.appendChild(card);
+  });
+}
+
 function refreshPreview() {
   currentPreview.textContent = JSON.stringify(working, null, 2);
 }
@@ -616,6 +714,7 @@ function renderAll() {
   alignAllVesselRowsToTemplate();
   ensureTermBehaviorRecords();
   ensureTermClauseRecords();
+  ensureExtraClausePortRules();
   if (!working.vesselOptions.includes(selectedVessel)) {
     selectedVessel = working.vesselOptions[0] || '';
   }
@@ -623,6 +722,7 @@ function renderAll() {
   renderSelectedVesselEditor();
   renderOptionEditors();
   renderTermBehaviorList();
+  renderExtraClausePortRulesList();
   defaultsJson.value = JSON.stringify(working.formDefaults, null, 2);
   refreshPreview();
 }
@@ -795,6 +895,18 @@ vesselNameInput.addEventListener('input', () => {
 rawSpecsInput.addEventListener('input', () => {
   if (!selectedVessel) return;
   working.vesselSpecs[selectedVessel] = rawSpecsInput.value;
+  refreshPreview();
+});
+
+addExtraClausePortRuleBtn?.addEventListener('click', () => {
+  ensureExtraClausePortRules();
+  working.extraClausePortRules.push({
+    id: `port_clause_${Date.now()}`,
+    pol: '',
+    pod: '',
+    clause: ''
+  });
+  renderExtraClausePortRulesList();
   refreshPreview();
 });
 

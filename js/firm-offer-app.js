@@ -4,6 +4,7 @@ import {
   buildHtmlEmailDocument,
   buildMailtoUrl,
   buildVesselSpecsBlocks,
+  clauseLinesFromText,
   getTermBehavior,
   trimmed
 } from '../shared/offer-logic.js';
@@ -70,6 +71,50 @@ let isApplyingExternalState = false;
 let lastSharedStateSignature = '';
 let statusTimeoutId = 0;
 let previewRefreshHandle = 0;
+
+function normalizeMatchKey(value) {
+  return trimmed(value).toLowerCase();
+}
+
+function getMatchingExtraClauseLines(data) {
+  const pol = normalizeMatchKey(data.pol);
+  const pod = normalizeMatchKey(data.pod);
+  const rules = Array.isArray(runtimeConfig.extraClausePortRules) ? runtimeConfig.extraClausePortRules : [];
+
+  return rules
+    .filter((rule) => {
+      const rulePol = normalizeMatchKey(rule.pol);
+      const rulePod = normalizeMatchKey(rule.pod);
+      if (!rulePol && !rulePod) return false;
+      if (rulePol && rulePol !== pol) return false;
+      if (rulePod && rulePod !== pod) return false;
+      return true;
+    })
+    .map((rule) => trimmed(rule.clause))
+    .filter(Boolean);
+}
+
+function syncAutoExtraClauses() {
+  const field = getFieldElement('extraClauses');
+  if (!field) return;
+
+  const previousAutoClauses = (() => {
+    try {
+      const parsed = JSON.parse(field.dataset.autoClauses || '[]');
+      return Array.isArray(parsed) ? parsed.map((line) => trimmed(line)).filter(Boolean) : [];
+    } catch (_) {
+      return [];
+    }
+  })();
+
+  const allCurrentLines = clauseLinesFromText(field.value);
+  const manualLines = allCurrentLines.filter((line) => !previousAutoClauses.includes(line));
+  const nextAutoClauses = getMatchingExtraClauseLines(collectFormData());
+  const nextLines = [...new Set([...nextAutoClauses, ...manualLines])];
+
+  field.dataset.autoClauses = JSON.stringify(nextAutoClauses);
+  field.value = nextLines.join('\n');
+}
 
 function currentDefaults() {
   return runtimeConfig.formDefaults || {};
@@ -287,6 +332,7 @@ function applySnapshotToForm(snapshot) {
 
     initializeSelects(snapshot);
     syncStructuredVesselSpecs();
+    syncAutoExtraClauses();
   } finally {
     isApplyingExternalState = false;
   }
@@ -620,6 +666,7 @@ function reinitializeForCustomizationChange() {
   initializeSelects(currentData);
   applyTextDefaults(currentData);
   syncStructuredVesselSpecs();
+  syncAutoExtraClauses();
   pushWholeFormToStore();
   refreshPreview();
 }
@@ -633,6 +680,9 @@ function handleAnyInput(event) {
   if (target.id === 'vessel') {
     syncStructuredVesselSpecs();
   }
+  if (target.name === 'pol' || target.name === 'pod') {
+    syncAutoExtraClauses();
+  }
 
   pushWholeFormToStore();
   queuePreviewRefresh();
@@ -642,6 +692,7 @@ runtimeConfig = getRuntimeConfig();
 initializeSelects();
 applyTextDefaults();
 syncStructuredVesselSpecs();
+syncAutoExtraClauses();
 initializeSharedState({ forceDefaults: customizationDefaultsChanged() });
 initializeTheme();
 refreshPreview();
