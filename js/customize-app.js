@@ -249,8 +249,7 @@ function ensureExtraClausePortRules() {
       pol: String(rule?.pol || ''),
       pod: String(rule?.pod || ''),
       clause: String(rule?.clause || '')
-    }))
-    .filter((rule) => rule.clause.trim() || rule.pol.trim() || rule.pod.trim());
+    }));
 }
 
 function alignAllVesselRowsToTemplate() {

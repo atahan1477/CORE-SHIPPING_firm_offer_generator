@@ -64,6 +64,11 @@ test('customize page uses inline dialogs instead of native prompt and confirm fl
   assert.doesNotMatch(app, /window\.prompt\(/, 'customize app should not use prompt');
   assert.doesNotMatch(app, /window\.confirm\(/, 'customize app should not use confirm');
   assert.match(app, /function\s+renderExtraClausePortRulesList\(/, 'customize app should render POL\/POD extra clause rules');
+  assert.doesNotMatch(
+    app,
+    /\.filter\(\(rule\)\s*=>\s*rule\.clause\.trim\(\)\s*\|\|\s*rule\.pol\.trim\(\)\s*\|\|\s*rule\.pod\.trim\(\)\)/,
+    'customize app should keep blank starter POL/POD rule rows'
+  );
 });
 
 test('firm generator includes POL/POD auto extra-clause sync', () => {
