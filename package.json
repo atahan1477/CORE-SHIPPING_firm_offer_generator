@@ -1,6 +1,9 @@
 {
   "name": "core-shipping-tools",
   "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
   "dependencies": {
     "@vercel/blob": "latest"
   }

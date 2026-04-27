@@ -4,364 +4,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Core Shipping | Tools</title>
-  <style>
-    :root {
-      --bg-1: #edf2f7;
-      --bg-2: #e4edf6;
-      --panel: rgba(255,255,255,0.94);
-      --border: #d7e0eb;
-      --text: #17314e;
-      --muted: #667b93;
-      --navy: #16355d;
-      --navy-2: #244873;
-      --gold: #caa25d;
-      --shadow: 0 18px 42px rgba(16, 40, 70, 0.14);
-      --radius: 24px;
-    }
+  <link rel="stylesheet" href="./styles/core-ui.css" />
+  <script>
+    (function () {
+      const THEME_STORAGE_KEY = 'coreShippingTheme';
+      const LEGACY_THEME_STORAGE_KEY = 'firmOfferGeneratorTheme';
 
-    * { box-sizing: border-box; }
+      let theme = 'light';
+      try {
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        const legacy = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+        if (stored === 'dark' || stored === 'light') {
+          theme = stored;
+        } else if (legacy === 'dark' || legacy === 'light') {
+          theme = legacy;
+          localStorage.setItem(THEME_STORAGE_KEY, legacy);
+        }
+      } catch (_) {}
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(22,53,93,0.10), transparent 22%),
-        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
-    }
-
-    .shell {
-      width: min(1120px, 100%);
-      background: var(--panel);
-      border: 1px solid rgba(255,255,255,0.86);
-      border-radius: 30px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-      overflow: hidden;
-    }
-
-    .hero {
-      padding: 24px 28px 18px;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(22,53,93,0.06), rgba(255,255,255,0.25));
-    }
-
-    .hero-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    .brand {
-      width: min(280px, 100%);
-      padding: 10px 12px;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #ffffff, #f6f9fc);
-      border: 1px solid var(--border);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.88);
-    }
-
-    .brand img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
-
-    h1 {
-      margin: 22px 0 8px;
-      font-size: clamp(2rem, 4vw, 3rem);
-      letter-spacing: -0.04em;
-      line-height: 1;
-    }
-
-    .hero p {
-      margin: 0;
-      font-size: 1rem;
-      color: var(--muted);
-      max-width: 760px;
-      line-height: 1.55;
-    }
-
-    .tools {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 20px;
-      padding: 28px;
-    }
-
-    .tool-card {
-      position: relative;
-      min-height: 260px;
-      padding: 24px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, #ffffff, #f7fafd);
-      box-shadow: 0 12px 30px rgba(16, 40, 70, 0.08);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 18px;
-    }
-
-    .tool-card.under-development {
-      overflow: hidden;
-    }
-
-    .tool-card.under-development::after {
-      content: "UNDER CONSTRUCTION";
-      position: absolute;
-      top: 56%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-27deg);
-      width: 165%;
-      height: 54px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.05rem;
-      font-weight: 900;
-      letter-spacing: 0.03em;
-      color: #ffffff;
-      text-shadow:
-        -1px -1px 0 #000,
-        1px -1px 0 #000,
-        -1px 1px 0 #000,
-        1px 1px 0 #000,
-        0 2px 4px rgba(0, 0, 0, 0.45);
-      background:
-        repeating-linear-gradient(
-          -45deg,
-          #1f1f1f 0 16px,
-          #f4de2f 16px 32px
-        );
-      border-top: 4px solid #f4de2f;
-      border-bottom: 4px solid #f4de2f;
-      box-shadow: 0 10px 20px rgba(10, 20, 35, 0.24);
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      width: fit-content;
-      padding: 7px 12px;
-      border-radius: 999px;
-      font-size: 0.76rem;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      background: rgba(22,53,93,0.08);
-      color: var(--navy);
-      border: 1px solid rgba(22,53,93,0.08);
-    }
-
-    .tool-card h2 {
-      margin: 0;
-      font-size: clamp(1.45rem, 2vw, 1.8rem);
-      letter-spacing: -0.03em;
-    }
-
-    .tool-card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.65;
-      font-size: 0.98rem;
-    }
-
-    .actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .actions-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .meta {
-      font-size: 0.9rem;
-      color: var(--muted);
-      font-weight: 600;
-    }
-
-    .tool-button {
-      appearance: none;
-      border: 0;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      min-width: 196px;
-      padding: 14px 20px;
-      border-radius: 999px;
-      color: #fff;
-      background: linear-gradient(180deg, var(--navy-2), var(--navy));
-      font-weight: 800;
-      letter-spacing: 0.01em;
-      box-shadow: 0 12px 22px rgba(22,53,93,0.18);
-      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-    }
-
-    .tool-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 28px rgba(22,53,93,0.22);
-      filter: brightness(1.02);
-    }
-
-    .tool-button.secondary {
-      background: linear-gradient(180deg, #caa25d, #b88b40);
-      box-shadow: 0 12px 22px rgba(202,162,93,0.24);
-    }
-
-    .tool-button.ghost {
-      min-width: 150px;
-      color: var(--navy);
-      background: #fff;
-      border: 1px solid var(--border);
-      box-shadow: 0 10px 18px rgba(16, 40, 70, 0.08);
-    }
-
-    .footer-note {
-      padding: 0 28px 28px;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .theme-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #ffffff, #f6f9fc);
-      border: 1px solid var(--border);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
-      user-select: none;
-    }
-
-    .theme-toggle-label {
-      font-size: 0.82rem;
-      font-weight: 800;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .theme-switch {
-      position: relative;
-      width: 48px;
-      height: 28px;
-      display: inline-block;
-    }
-
-    .theme-switch input {
-      position: absolute;
-      opacity: 0;
-      inset: 0;
-      margin: 0;
-      cursor: pointer;
-    }
-
-    .theme-slider {
-      position: absolute;
-      inset: 0;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #d8e2ee, #c7d4e4);
-      transition: background 0.2s ease;
-      box-shadow: inset 0 1px 2px rgba(16, 40, 70, 0.12);
-    }
-
-    .theme-slider::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 2px 8px rgba(16, 40, 70, 0.18);
-      transition: transform 0.2s ease;
-    }
-
-    .theme-switch input:checked + .theme-slider {
-      background: linear-gradient(180deg, #3f5d85, #244873);
-    }
-
-    .theme-switch input:checked + .theme-slider::after {
-      transform: translateX(20px);
-    }
-
-    html[data-theme="dark"] {
-      --bg-1: #0d1726;
-      --bg-2: #09121d;
-      --panel: rgba(15, 26, 40, 0.94);
-      --border: #2c3f56;
-      --text: #e5edf8;
-      --muted: #a7bdd7;
-      --shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
-    }
-
-    html[data-theme="dark"] .tool-card,
-    html[data-theme="dark"] .brand,
-    html[data-theme="dark"] .tool-button.ghost,
-    html[data-theme="dark"] .theme-toggle {
-      background: linear-gradient(180deg, #1a2a3f, #152337);
-      border-color: #31445d;
-      color: #e5edf8;
-      box-shadow: none;
-    }
-
-    html[data-theme="dark"] .eyebrow {
-      color: #d4e4fa;
-      background: rgba(120, 155, 194, 0.16);
-      border-color: rgba(120, 155, 194, 0.26);
-    }
-
-    html[data-theme="dark"] .tool-card.under-development::after {
-      color: #ffffff;
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
-    }
-
-    html[data-theme="dark"] .theme-toggle-label,
-    html[data-theme="dark"] .meta,
-    html[data-theme="dark"] .tool-card p,
-    html[data-theme="dark"] .hero p,
-    html[data-theme="dark"] .footer-note {
-      color: #a7bdd7;
-    }
-
-    @media (max-width: 880px) {
-      .tools {
-        grid-template-columns: 1fr;
-      }
-
-      body {
-        align-items: stretch;
-      }
-    }
-  </style>
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
 </head>
-<body>
-  <main class="shell">
-    <section class="hero">
+<body class="landing-page">
+  <main class="suite-shell">
+    <section class="suite-hero">
       <div class="hero-top">
         <div class="brand">
-        <img src="https://raw.githubusercontent.com/atahan1477/CORE-SHIPPING_firm_offer_generator/main/assets/core-shipping-logo.png" alt="Core Shipping" onerror="this.closest('.brand').style.display='none'" />
+          <img src="./assets/core-shipping-logo.png" alt="Core Shipping" />
         </div>
         <div class="theme-toggle">
           <span class="theme-toggle-label">Light / Dark</span>
@@ -372,7 +42,7 @@
         </div>
       </div>
       <h1>Core Shipping Tools</h1>
-      <p>Select a tool to continue. The first button opens your main Firm Offer Generator. The second button is labeled as requested and opens your Brevo JSON Feed Maker so non-technical users can prepare the feed file without editing raw JSON manually.</p>
+      <p>Select a tool to continue. The main generator now opens as a compact workflow while keeping the existing firm offer output and static Vercel setup.</p>
     </section>
 
     <section class="tools">
@@ -380,13 +50,13 @@
         <div>
           <span class="eyebrow">Primary Tool</span>
           <h2>Firm Offer Generator</h2>
-          <p>Open the main firm offer generation tool with the full existing workflow, live preview, copy actions, shared state integration, and email output builder.</p>
+          <p>Build shipping firm offer emails with vessel specs, commercial terms, live preview, copy, draft, and download actions.</p>
         </div>
         <div class="actions">
           <span class="meta">Main production tool</span>
           <div class="actions-group">
             <a class="tool-button ghost" href="./customize.html">Customize</a>
-            <a class="tool-button" href="./firm-generator.html">Firm Offer Generator</a>
+            <a class="tool-button" href="./firm-generator.html">Open Generator</a>
           </div>
         </div>
       </article>
@@ -395,17 +65,17 @@
         <div>
           <span class="eyebrow">Secondary Tool</span>
           <h2>Brevo JSON Feed Maker</h2>
-          <p>Open the Brevo feed JSON builder for your recurring Open Positions workflow. It generates the exact flat-root JSON structure used by your current Brevo data feed template.</p>
+          <p>Prepare the flat-root JSON feed used by the current Brevo Open Positions workflow without manually editing raw JSON.</p>
         </div>
         <div class="actions">
           <span class="meta">Brevo feed helper</span>
-          <a class="tool-button secondary" href="./shared-state-example.html">Brevo JSON Feed Maker</a>
+          <a class="tool-button secondary" href="./shared-state-example.html">Open Feed Maker</a>
         </div>
       </article>
     </section>
 
     <div class="footer-note">
-      Both pages use the same domain structure, so this setup stays fully compatible with your current GitHub to Vercel deployment workflow.
+      This suite stays compatible with the current GitHub to Vercel static deployment workflow.
     </div>
   </main>
 

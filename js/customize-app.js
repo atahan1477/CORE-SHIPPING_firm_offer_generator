@@ -26,6 +26,18 @@ const termBehaviorList = document.getElementById('termBehaviorList');
 const defaultsJson = document.getElementById('defaultsJson');
 const customizationJson = document.getElementById('customizationJson');
 const currentPreview = document.getElementById('currentPreview');
+const saveDialog = document.getElementById('saveDialog');
+const savePasswordInput = document.getElementById('savePasswordInput');
+const confirmSaveBtn = document.getElementById('confirmSaveBtn');
+const cancelSaveBtn = document.getElementById('cancelSaveBtn');
+const addVesselDialog = document.getElementById('addVesselDialog');
+const newVesselNameInput = document.getElementById('newVesselNameInput');
+const confirmAddVesselBtn = document.getElementById('confirmAddVesselBtn');
+const cancelAddVesselBtn = document.getElementById('cancelAddVesselBtn');
+const removeVesselDialog = document.getElementById('removeVesselDialog');
+const removeVesselName = document.getElementById('removeVesselName');
+const confirmRemoveVesselBtn = document.getElementById('confirmRemoveVesselBtn');
+const cancelRemoveVesselBtn = document.getElementById('cancelRemoveVesselBtn');
 
 let working = createWorkingCopy(getRuntimeConfig());
 let selectedVessel = working.vesselOptions[0] || '';
@@ -36,13 +48,127 @@ function clone(value) {
 
 function showStatus(message, isError = false) {
   statusEl.textContent = message;
+  statusEl.classList.toggle('error', isError);
   statusEl.style.color = isError ? '#a53434' : '#166a52';
   setTimeout(() => {
     if (statusEl.textContent === message) {
       statusEl.textContent = '';
+      statusEl.classList.remove('error');
       statusEl.style.color = '#166a52';
     }
   }, 3600);
+}
+
+function openDialog(dialog, focusTarget) {
+  if (!dialog) return;
+  dialog.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    focusTarget?.focus();
+    if (focusTarget?.select) focusTarget.select();
+  });
+}
+
+function closeDialog(dialog) {
+  if (!dialog) return;
+  dialog.classList.add('hidden');
+}
+
+function requestTextDialog({ dialog, input, confirmButton, cancelButton, initialValue = '' }) {
+  if (!dialog || !input || !confirmButton || !cancelButton) {
+    return Promise.resolve(null);
+  }
+
+  input.value = initialValue;
+  openDialog(dialog, input);
+
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      confirmButton.removeEventListener('click', onConfirm);
+      cancelButton.removeEventListener('click', onCancel);
+      dialog.removeEventListener('click', onBackdrop);
+      input.removeEventListener('keydown', onInputKeydown);
+      document.removeEventListener('keydown', onDocumentKeydown);
+    };
+
+    const finish = (value) => {
+      cleanup();
+      closeDialog(dialog);
+      resolve(value);
+    };
+
+    function onConfirm() {
+      finish(input.value);
+    }
+
+    function onCancel() {
+      finish(null);
+    }
+
+    function onBackdrop(event) {
+      if (event.target === dialog) finish(null);
+    }
+
+    function onInputKeydown(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        finish(input.value);
+      }
+    }
+
+    function onDocumentKeydown(event) {
+      if (event.key === 'Escape') finish(null);
+    }
+
+    confirmButton.addEventListener('click', onConfirm);
+    cancelButton.addEventListener('click', onCancel);
+    dialog.addEventListener('click', onBackdrop);
+    input.addEventListener('keydown', onInputKeydown);
+    document.addEventListener('keydown', onDocumentKeydown);
+  });
+}
+
+function requestConfirmDialog({ dialog, confirmButton, cancelButton, focusTarget }) {
+  if (!dialog || !confirmButton || !cancelButton) {
+    return Promise.resolve(false);
+  }
+
+  openDialog(dialog, focusTarget || confirmButton);
+
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      confirmButton.removeEventListener('click', onConfirm);
+      cancelButton.removeEventListener('click', onCancel);
+      dialog.removeEventListener('click', onBackdrop);
+      document.removeEventListener('keydown', onDocumentKeydown);
+    };
+
+    const finish = (value) => {
+      cleanup();
+      closeDialog(dialog);
+      resolve(value);
+    };
+
+    function onConfirm() {
+      finish(true);
+    }
+
+    function onCancel() {
+      finish(false);
+    }
+
+    function onBackdrop(event) {
+      if (event.target === dialog) finish(false);
+    }
+
+    function onDocumentKeydown(event) {
+      if (event.key === 'Escape') finish(false);
+    }
+
+    confirmButton.addEventListener('click', onConfirm);
+    cancelButton.addEventListener('click', onCancel);
+    dialog.addEventListener('click', onBackdrop);
+    document.addEventListener('keydown', onDocumentKeydown);
+  });
 }
 
 function createWorkingCopy(source) {
@@ -530,7 +656,13 @@ async function reloadSharedCustomization(force = false) {
 document.getElementById('saveCustomizeBtn').addEventListener('click', async () => {
   try {
     const payload = buildCustomizationPayload();
-    const adminPassword = window.prompt('Enter admin password to save shared customization', '') ?? '';
+    const adminPassword = await requestTextDialog({
+      dialog: saveDialog,
+      input: savePasswordInput,
+      confirmButton: confirmSaveBtn,
+      cancelButton: cancelSaveBtn
+    }) ?? '';
+
     if (!adminPassword.trim()) {
       showStatus('Shared save cancelled: admin password is required.', true);
       return;
@@ -572,8 +704,13 @@ document.getElementById('importJsonBtn').addEventListener('click', () => {
   }
 });
 
-document.getElementById('addVesselBtn').addEventListener('click', () => {
-  const vesselName = window.prompt('New vessel name');
+document.getElementById('addVesselBtn').addEventListener('click', async () => {
+  const vesselName = await requestTextDialog({
+    dialog: addVesselDialog,
+    input: newVesselNameInput,
+    confirmButton: confirmAddVesselBtn,
+    cancelButton: cancelAddVesselBtn
+  });
   if (!vesselName) return;
   const clean = vesselName.trim();
   if (!clean) return;
@@ -589,9 +726,19 @@ document.getElementById('addVesselBtn').addEventListener('click', () => {
   showStatus('New vessel added.');
 });
 
-document.getElementById('removeVesselBtn').addEventListener('click', () => {
+document.getElementById('removeVesselBtn').addEventListener('click', async () => {
   if (!selectedVessel) return;
-  if (!window.confirm(`Remove ${selectedVessel}?`)) return;
+  if (removeVesselName) {
+    removeVesselName.textContent = selectedVessel;
+  }
+  const confirmed = await requestConfirmDialog({
+    dialog: removeVesselDialog,
+    confirmButton: confirmRemoveVesselBtn,
+    cancelButton: cancelRemoveVesselBtn,
+    focusTarget: cancelRemoveVesselBtn
+  });
+  if (!confirmed) return;
+
   working.vesselOptions = working.vesselOptions.filter((vessel) => vessel !== selectedVessel);
   delete working.vesselSpecs[selectedVessel];
   delete working.vesselStructuredSpecs[selectedVessel];
