@@ -100,7 +100,15 @@ export const baseConfig = {
     senderDirect: '',
     senderEmail: '',
     senderWeb: 'www.core-shipping.com'
-  }
+  },
+  extraClausePortRules: [
+    {
+      id: 'gabon_pod',
+      pol: '',
+      pod: 'Gabon',
+      clause: 'CARBON Tax and CGC Tax charterers account.'
+    }
+  ]
 };
 
 export const BASE_TERM_BEHAVIOR = {
@@ -504,6 +512,36 @@ function sanitizeTermClauses(value, termsOptions) {
   return result;
 }
 
+function sanitizeExtraClausePortRules(value) {
+  const safeValue = Array.isArray(value) ? value : [];
+  const result = [];
+  const seen = new Set();
+
+  safeValue.forEach((row, index) => {
+    const pol = trimmed(row?.pol || '');
+    const pod = trimmed(row?.pod || '');
+    const clause = trimmed(row?.clause || '');
+    if (!clause || (!pol && !pod)) return;
+
+    let id = trimmed(row?.id || `port_clause_${index + 1}`);
+    while (seen.has(id)) {
+      id = `${id}_x`;
+    }
+    seen.add(id);
+
+    result.push({ id, pol, pod, clause });
+  });
+
+  if (result.length) return result;
+
+  return (baseConfig.extraClausePortRules || []).map((rule, index) => ({
+    id: trimmed(rule?.id || `base_port_clause_${index + 1}`),
+    pol: trimmed(rule?.pol || ''),
+    pod: trimmed(rule?.pod || ''),
+    clause: trimmed(rule?.clause || '')
+  })).filter((rule) => rule.clause && (rule.pol || rule.pod));
+}
+
 export function loadRuntimeCustomization() {
   try {
     const raw = localStorage.getItem(CUSTOMIZATION_STORAGE_KEY);
@@ -540,7 +578,8 @@ function sanitizeCustomization(value) {
     agentOptions: uniqueTrimmedList(source.agentOptions || baseConfig.agentOptions),
     formDefaults: sanitizeFormDefaults(source.formDefaults || baseConfig.formDefaults),
     termBehavior: sanitizeTermBehavior(source.termBehavior || source.TERM_BEHAVIOR || {}, uniqueTrimmedList(source.termsOptions || baseConfig.termsOptions)),
-    termClauses: sanitizeTermClauses(source.termClauses || source.TERM_CLAUSES || {}, uniqueTrimmedList(source.termsOptions || baseConfig.termsOptions))
+    termClauses: sanitizeTermClauses(source.termClauses || source.TERM_CLAUSES || {}, uniqueTrimmedList(source.termsOptions || baseConfig.termsOptions)),
+    extraClausePortRules: sanitizeExtraClausePortRules(source.extraClausePortRules || baseConfig.extraClausePortRules)
   };
 }
 
