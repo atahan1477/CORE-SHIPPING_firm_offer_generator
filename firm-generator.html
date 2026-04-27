@@ -159,12 +159,13 @@
                     </div>
                     <div class="field">
                       <label for="pol">POL</label>
-                      <input id="pol" name="pol" placeholder="Port of Loading" />
+                      <input id="pol" name="pol" placeholder="Port of Loading" list="portSuggestions" />
                     </div>
                     <div class="field">
                       <label for="pod">POD</label>
-                      <input id="pod" name="pod" placeholder="Port of Discharge" />
+                      <input id="pod" name="pod" placeholder="Port of Discharge" list="portSuggestions" />
                     </div>
+                    <datalist id="portSuggestions"></datalist>
                     <div class="field">
                       <label for="polSuffix">POL port suffix</label>
                       <input id="polSuffix" name="polSuffix" value="Owners terminal" />

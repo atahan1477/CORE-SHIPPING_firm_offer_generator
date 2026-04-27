@@ -72,26 +72,108 @@ let lastSharedStateSignature = '';
 let statusTimeoutId = 0;
 let previewRefreshHandle = 0;
 
-function normalizeMatchKey(value) {
-  return trimmed(value).toLowerCase();
+function splitPortMatcherText(value) {
+  return String(value ?? '')
+    .split(/[\n,;]+/)
+    .map((item) => trimmed(item))
+    .filter(Boolean);
+}
+
+function normalizePortMatch(value) {
+  return trimmed(value)
+    .replace(/[’`´]/g, "'")
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function expandSlashAliases(token) {
+  const raw = trimmed(token);
+  if (!raw) return [];
+
+  const result = [raw];
+  const slashParts = raw
+    .split(/\s*\/\s*/)
+    .map((part) => trimmed(part))
+    .filter(Boolean);
+
+  slashParts.forEach((part) => {
+    if (!result.includes(part)) result.push(part);
+  });
+
+  return result;
+}
+
+function getRulePortTokens(rule) {
+  const polTokens = [];
+  const podTokens = [];
+
+  splitPortMatcherText(rule?.pol).forEach((entry) => {
+    expandSlashAliases(entry).forEach((alias) => polTokens.push(alias));
+  });
+
+  splitPortMatcherText(rule?.pod).forEach((entry) => {
+    expandSlashAliases(entry).forEach((alias) => podTokens.push(alias));
+  });
+
+  return {
+    polNormalized: new Set(polTokens.map((item) => normalizePortMatch(item)).filter(Boolean)),
+    podNormalized: new Set(podTokens.map((item) => normalizePortMatch(item)).filter(Boolean)),
+    polDisplay: polTokens,
+    podDisplay: podTokens
+  };
+}
+
+function collectPortSuggestionsFromRules(rules) {
+  const byNormalized = new Map();
+
+  (Array.isArray(rules) ? rules : []).forEach((rule) => {
+    const tokens = getRulePortTokens(rule);
+    [...tokens.polDisplay, ...tokens.podDisplay].forEach((token) => {
+      const display = trimmed(token);
+      const normalized = normalizePortMatch(display);
+      if (!display || !normalized || byNormalized.has(normalized)) return;
+      byNormalized.set(normalized, display);
+    });
+  });
+
+  return Array.from(byNormalized.values()).sort((a, b) => a.localeCompare(b));
 }
 
 function getMatchingExtraClauseLines(data) {
-  const pol = normalizeMatchKey(data.pol);
-  const pod = normalizeMatchKey(data.pod);
+  const pol = normalizePortMatch(data.pol);
+  const pod = normalizePortMatch(data.pod);
   const rules = Array.isArray(runtimeConfig.extraClausePortRules) ? runtimeConfig.extraClausePortRules : [];
 
   return rules
     .filter((rule) => {
-      const rulePol = normalizeMatchKey(rule.pol);
-      const rulePod = normalizeMatchKey(rule.pod);
-      if (!rulePol && !rulePod) return false;
-      if (rulePol && rulePol !== pol) return false;
-      if (rulePod && rulePod !== pod) return false;
-      return true;
+      const tokens = getRulePortTokens(rule);
+      const hasPol = tokens.polNormalized.size > 0;
+      const hasPod = tokens.podNormalized.size > 0;
+      if (!hasPol && !hasPod) return false;
+
+      const polMatches = hasPol && pol ? tokens.polNormalized.has(pol) : false;
+      const podMatches = hasPod && pod ? tokens.podNormalized.has(pod) : false;
+
+      if (hasPol && hasPod) return polMatches || podMatches;
+      if (hasPol) return polMatches;
+      return podMatches;
     })
     .map((rule) => trimmed(rule.clause))
     .filter(Boolean);
+}
+
+function updatePortSuggestions() {
+  const list = document.getElementById('portSuggestions');
+  if (!list) return;
+
+  const suggestions = collectPortSuggestionsFromRules(runtimeConfig.extraClausePortRules);
+  list.innerHTML = '';
+
+  suggestions.forEach((port) => {
+    const option = document.createElement('option');
+    option.value = port;
+    list.appendChild(option);
+  });
 }
 
 function syncAutoExtraClauses() {
@@ -665,6 +747,7 @@ function reinitializeForCustomizationChange() {
 
   initializeSelects(currentData);
   applyTextDefaults(currentData);
+  updatePortSuggestions();
   syncStructuredVesselSpecs();
   syncAutoExtraClauses();
   pushWholeFormToStore();
@@ -691,6 +774,7 @@ function handleAnyInput(event) {
 runtimeConfig = getRuntimeConfig();
 initializeSelects();
 applyTextDefaults();
+updatePortSuggestions();
 syncStructuredVesselSpecs();
 syncAutoExtraClauses();
 initializeSharedState({ forceDefaults: customizationDefaultsChanged() });

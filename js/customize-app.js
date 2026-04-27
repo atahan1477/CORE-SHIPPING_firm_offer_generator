@@ -642,32 +642,44 @@ function renderExtraClausePortRulesList() {
     grid.className = 'grid';
 
     const polField = document.createElement('div');
-    polField.className = 'field';
+    polField.className = 'field full';
     const polLabel = document.createElement('label');
-    polLabel.textContent = 'POL match (optional)';
-    const polInput = document.createElement('input');
-    polInput.placeholder = 'e.g. Port Gentil';
+    polLabel.textContent = 'POL matches (optional, one per line or comma-separated)';
+    const polInput = document.createElement('textarea');
+    polInput.className = 'small';
+    polInput.placeholder = 'e.g. Port Gentil, Owendo';
+    polInput.rows = 3;
     polInput.value = rule.pol || '';
     polInput.addEventListener('input', () => {
       working.extraClausePortRules[index].pol = polInput.value;
       refreshPreview();
     });
+    const polHelp = document.createElement('div');
+    polHelp.className = 'section-subnote';
+    polHelp.textContent = 'Use one port per line, or separate ports with commas/semicolons. Matching is exact after trimming/case normalization.';
     polField.appendChild(polLabel);
     polField.appendChild(polInput);
+    polField.appendChild(polHelp);
 
     const podField = document.createElement('div');
-    podField.className = 'field';
+    podField.className = 'field full';
     const podLabel = document.createElement('label');
-    podLabel.textContent = 'POD match (optional)';
-    const podInput = document.createElement('input');
-    podInput.placeholder = 'e.g. Gabon';
+    podLabel.textContent = 'POD matches (optional, one per line or comma-separated)';
+    const podInput = document.createElement('textarea');
+    podInput.className = 'small';
+    podInput.placeholder = 'e.g. Dakar; Kaolack';
+    podInput.rows = 3;
     podInput.value = rule.pod || '';
     podInput.addEventListener('input', () => {
       working.extraClausePortRules[index].pod = podInput.value;
       refreshPreview();
     });
+    const podHelp = document.createElement('div');
+    podHelp.className = 'section-subnote';
+    podHelp.textContent = 'Use one port per line, or separate ports with commas/semicolons. Matching is exact after trimming/case normalization.';
     podField.appendChild(podLabel);
     podField.appendChild(podInput);
+    podField.appendChild(podHelp);
 
     const clauseField = document.createElement('div');
     clauseField.className = 'field full';
