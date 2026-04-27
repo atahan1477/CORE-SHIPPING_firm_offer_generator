@@ -103,10 +103,92 @@ export const baseConfig = {
   },
   extraClausePortRules: [
     {
-      id: 'gabon_pod',
-      pol: '',
-      pod: 'Gabon',
+      id: 'gabon_tax_ports',
+      pol: `Cap Lopez
+Gamba
+Libreville
+Lucina Terminal
+Mayumba
+M’Bya Terminal
+Nyanga
+Oguendjo Terminal
+Owendo
+Port Gentil
+Tchatamba Marine Terminal`,
+      pod: `Cap Lopez
+Gamba
+Libreville
+Lucina Terminal
+Mayumba
+M’Bya Terminal
+Nyanga
+Oguendjo Terminal
+Owendo
+Port Gentil
+Tchatamba Marine Terminal`,
       clause: 'CARBON Tax and CGC Tax charterers account.'
+    },
+    {
+      id: 'nigeria_tax_ports',
+      pol: `Apapa / Lagos Port Complex
+Tin Can Island
+Lekki Deep Sea Port
+Calabar
+Warri / Delta Port
+Port Harcourt / Rivers Port
+Onne
+Bonny
+Brass Terminal
+Burutu
+Escravos
+Forcados
+Koko
+Okrika
+Sapele
+Qua Iboe
+Odudu Terminal
+Okono Terminal
+Pennington Terminal
+Ukpokiti Marine Terminal
+Yoho Terminal`,
+      pod: `Apapa / Lagos Port Complex
+Tin Can Island
+Lekki Deep Sea Port
+Calabar
+Warri / Delta Port
+Port Harcourt / Rivers Port
+Onne
+Bonny
+Brass Terminal
+Burutu
+Escravos
+Forcados
+Koko
+Okrika
+Sapele
+Qua Iboe
+Odudu Terminal
+Okono Terminal
+Pennington Terminal
+Ukpokiti Marine Terminal
+Yoho Terminal`,
+      clause: 'NMA/NPA/Nimasa to be for charterers/receivers account'
+    },
+    {
+      id: 'senegal_tax_ports',
+      pol: `Dakar
+Kaolack
+Lyndiane
+M’Bao Oil Terminal
+Ziguinchor
+Saint-Louis`,
+      pod: `Dakar
+Kaolack
+Lyndiane
+M’Bao Oil Terminal
+Ziguinchor
+Saint-Louis`,
+      clause: 'ANAM tax to be for charterers/receivers account'
     }
   ]
 };

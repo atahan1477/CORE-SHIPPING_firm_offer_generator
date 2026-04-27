@@ -72,9 +72,23 @@ test('customize page uses inline dialogs instead of native prompt and confirm fl
 });
 
 test('firm generator includes POL/POD auto extra-clause sync', () => {
+  const html = read('firm-generator.html');
   const app = read('js/firm-offer-app.js');
+  const config = read('shared/config.js');
+
+  assert.match(html, /id="portSuggestions"/, 'firm generator should include shared port suggestion datalist');
+  assert.match(html, /id="pol"[^>]*list="portSuggestions"/, 'POL field should use port suggestion datalist');
+  assert.match(html, /id="pod"[^>]*list="portSuggestions"/, 'POD field should use port suggestion datalist');
+
   assert.match(app, /function\s+syncAutoExtraClauses\(/, 'firm app should auto-sync extra clauses');
+  assert.match(app, /function\s+splitPortMatcherText\(/, 'firm app should split multi-value POL\/POD matcher text');
+  assert.match(app, /function\s+normalizePortMatch\(/, 'firm app should normalize POL\/POD matching values');
+  assert.match(app, /function\s+collectPortSuggestionsFromRules\(/, 'firm app should collect autocomplete suggestions');
+  assert.match(app, /function\s+updatePortSuggestions\(/, 'firm app should render autocomplete suggestions');
   assert.match(app, /runtimeConfig\.extraClausePortRules/, 'firm app should read runtime POL\/POD rules');
+  assert.match(config, /id:\s*'gabon_tax_ports'/, 'default Gabon port rule should be present');
+  assert.match(config, /id:\s*'nigeria_tax_ports'/, 'default Nigeria port rule should be present');
+  assert.match(config, /id:\s*'senegal_tax_ports'/, 'default Senegal port rule should be present');
 });
 
 test('offer output remains compatible for subject, text, html, and mailto generation', async () => {
